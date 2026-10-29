@@ -41,10 +41,15 @@ will need a later published approval scope after those artifacts exist.
 
 ## Independent ownership and access
 
-- Operator-provisioned workspaces; no public signup endpoint. Provisioning
-  requires the deployment's private database credential through a bounded
-  operator command. It issues one random 256-bit owner capability and a recovery
-  file delivered privately, never committed, printed in logs or seeded in UI.
+- Operator-provisioned workspaces; no public signup endpoint. Provisioning and
+  privileged recovery/rotation require a separate operator-only connection or
+  approved privileged operator context, unavailable to the deployed API. The
+  command must fail if that explicit context is absent; it never falls back to
+  `linky_runtime` or widens runtime grants. Generate and privately retain the
+  random 256-bit owner capability/stable provisioning ID before the write, so
+  uncertain acknowledgement cannot lose the only recovery material. The
+  recovery file is never committed, printed in logs or seeded in UI. No
+  operator/admin database credential is deployed to the application.
 - Owner keys authorize management only for their bound workspace. Recipient
   grant keys authorize one selected link/destination revision; conversion keys
   authorize write-only event ingestion for their recorded scope. Types are

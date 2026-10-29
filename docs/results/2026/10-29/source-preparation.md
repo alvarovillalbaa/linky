@@ -113,3 +113,29 @@ The actual persistent service, protected-origin integration, verified ownership,
 default destination/runtime behavior, privacy/abuse/scale acceptance and hosted
 application remain open. This source packet does not complete Linky or the
 full portfolio goal.
+
+## Publication
+
+Created personal public [alvarovillalbaa/linky](https://github.com/alvarovillalbaa/linky)
+at [`0f71118e0715ef6315c355ff6a4d462900e7e940`](https://github.com/alvarovillalbaa/linky/commit/0f71118e0715ef6315c355ff6a4d462900e7e940).
+Connected GitHub ref/tree readback matched all 22 file paths, modes, types and
+blob SHAs without truncation; the checkout was clean and no active workflow
+exists. The first approval request links that immutable proposal. This
+publication-only receipt changes no sealed source, proposal or case. No Vercel
+project was created for the unconnected presentation.
+
+Post-publication peer review clarified that provisioning uses a distinct
+operator-only privilege, never the deployed runtime credential or a fallback.
+It also verified the [pinned official CLI generator source](https://github.com/supabase/cli/blob/5afad870388552d0198087d27037da7ac745ba2b/apps/cli/src/commands/migration/new/new.handler.ts):
+the command creates its directory/file without an initialized project or a
+database/Management API/Docker layer. Explicit empty stdin in the proposed job
+guarantees an empty scaffold. These tighten the original source-only scope;
+they add no live permission, job, dependency or test execution. The machine
+record retains both the original preparation seal and these two clarified
+artifact hashes. All application/test inputs are unchanged.
+
+Clarification readback matched all 20 original sealed inputs at the published
+commit, the 18 unchanged current inputs and both clarified artifact hashes.
+The two JSON records and 21 local Markdown links parsed/resolved; the inactive
+workflow YAML and all six shell bodies passed syntax parsing. `git diff --check`
+passed. No product module, test or CI job was executed.

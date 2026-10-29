@@ -60,7 +60,7 @@ jobs:
         run: |
           npm exec --yes --package=supabase@2.122.0 -- supabase --version
           npm exec --yes --package=supabase@2.122.0 -- supabase migration new --help
-          npm exec --yes --package=supabase@2.122.0 -- supabase migration new linky_initial_service
+          npm exec --yes --package=supabase@2.122.0 -- supabase migration new linky_initial_service </dev/null
       - name: Verify source-only outputs
         run: |
           node --input-type=module <<'NODE'

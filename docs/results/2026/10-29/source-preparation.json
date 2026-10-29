@@ -241,6 +241,36 @@
   "exclusions": [
     "This generated fingerprint cannot hash itself; dated receipts/publication follow-ups are outside this preparation seal."
   ],
+  "postPublicationClarification": {
+    "originalPreparationCommit": "0f71118e0715ef6315c355ff6a4d462900e7e940",
+    "scopeExpansion": false,
+    "reason": "Provisioning is operator-only with no runtime fallback; generator stdin is explicitly empty.",
+    "officialCLICommit": "5afad870388552d0198087d27037da7ac745ba2b",
+    "sources": [
+      {
+        "path": "docs/proposals/persistent-service.md",
+        "sha256": "572ea2fdd2ae2bec0ae1503b4e828d4a37fa3bbc2aa00870ea49fc175f804666"
+      },
+      {
+        "path": "docs/proposals/source-prerequisites.workflow.yml",
+        "sha256": "6713be0b62289ee8a0f4058f65eacfccf6c59fc2c60eb1bc8dd01979b3e2a3c6"
+      }
+    ],
+    "applicationAndTestInputsChanged": false,
+    "staticValidation": {
+      "originalSealedInputsMatchedAtOriginalCommit": 20,
+      "unchangedSealedInputsMatchedCurrentFiles": 18,
+      "clarifiedArtifactHashesMatched": 2,
+      "jsonDocumentsParsed": 2,
+      "localMarkdownLinksResolved": 21,
+      "proposedWorkflowYamlParsed": true,
+      "proposedWorkflowShellBodiesParsed": 6,
+      "activeWorkflowExists": false,
+      "gitDiffCheck": "passed"
+    },
+    "ciJobsExecuted": 0,
+    "testsExecuted": 0
+  },
   "unfinished": [
     "Real persistent/authenticated Linky service and exact approved migration/check rollout.",
     "At-scale and hosted behavior, protected-origin enforcement and safety/attribution acceptance.",
