@@ -1,0 +1,10 @@
+{
+  "name": "linky",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Persistent link management, scoped access, attribution and destination review.",
+  "engines": { "node": ">=22" },
+  "scripts": { "check": "node scripts/check.mjs" },
+  "license": "MIT"
+}

@@ -1,0 +1,91 @@
+# Inactive review artifact. Activate only after the exact Linky source/prerequisite CI approval.
+name: Linky approved source prerequisites
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-prerequisites:
+    if: github.ref == 'refs/heads/qa/linky-source-prerequisites'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24.21.0
+      - name: Verify approved manifest
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFileSync } from 'node:fs';
+          import assert from 'node:assert/strict';
+          const value = JSON.parse(readFileSync('package.json', 'utf8'));
+          assert.deepEqual(value.dependencies, { pg: '8.23.1' });
+          assert.equal(value.engines.node, '24.x');
+          assert.ok(!value.devDependencies || !Object.keys(value.devDependencies).length);
+          assert.ok(!value.optionalDependencies || !Object.keys(value.optionalDependencies).length);
+          assert.equal(process.version, 'v24.21.0');
+          for (const name of ['DATABASE_URL', 'PGHOST', 'PGPASSWORD', 'SUPABASE_ACCESS_TOKEN', 'SUPABASE_DB_PASSWORD']) {
+            assert.equal(Boolean(process.env[name]), false);
+          }
+          NODE
+      - name: Resolve lockfile without executing package or product scripts
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+      - name: Validate resolved driver and absence of installed dependencies
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+          import { createHash } from 'node:crypto';
+          import assert from 'node:assert/strict';
+          const value = JSON.parse(readFileSync('package-lock.json', 'utf8'));
+          assert.equal(value.lockfileVersion, 3);
+          assert.deepEqual(value.packages[''].dependencies, { pg: '8.23.1' });
+          const driver = value.packages['node_modules/pg'];
+          assert.equal(driver.version, '8.23.1');
+          assert.equal(driver.integrity, 'sha512-aL96AHANtWjPLDOLqnhx+ngp9+UK7ETEU8VJrDCGvsSSi/mGLcWYsS6Herg7lmaBJe4uwrfqsa7gTEFaSizDoQ==');
+          assert.equal(existsSync('node_modules'), false);
+          writeFileSync(process.env.RUNNER_TEMP + '/linky-lock.sha256', createHash('sha256').update(readFileSync('package-lock.json')).digest('hex'));
+          NODE
+      - name: Verify pinned migration generator metadata
+        run: |
+          npm view supabase@2.122.0 dist.integrity --json > "$RUNNER_TEMP/linky-cli-integrity.json"
+          node --input-type=module <<'NODE'
+          import { readFileSync } from 'node:fs';
+          import assert from 'node:assert/strict';
+          assert.equal(JSON.parse(readFileSync(process.env.RUNNER_TEMP + '/linky-cli-integrity.json', 'utf8')), 'sha512-6IQOuHnRFyUgQxi6j6WfxJ6R4sh6vgcyhKxapv/CCDqs3+O/UxMggPxGAPr2eTEt1MhAOpa6xftiNRHIsB7afQ==');
+          NODE
+      - name: Generate only an unlinked migration source file
+        run: |
+          npm exec --yes --package=supabase@2.122.0 -- supabase --version
+          npm exec --yes --package=supabase@2.122.0 -- supabase migration new --help
+          npm exec --yes --package=supabase@2.122.0 -- supabase migration new linky_initial_service
+      - name: Verify source-only outputs
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFileSync, writeFileSync, readdirSync, existsSync, statSync } from 'node:fs';
+          import { createHash } from 'node:crypto';
+          import assert from 'node:assert/strict';
+          const digest = path => createHash('sha256').update(readFileSync(path)).digest('hex');
+          const files = readdirSync('supabase/migrations');
+          assert.equal(files.length, 1);
+          assert.match(files[0], /^\d{14}_linky_initial_service\.sql$/);
+          const migration = 'supabase/migrations/' + files[0];
+          assert.ok(statSync(migration).isFile());
+          assert.ok(statSync(migration).size < 1024);
+          assert.equal(existsSync('supabase/.temp/project-ref'), false);
+          assert.equal(existsSync('node_modules'), false);
+          assert.equal(digest('package-lock.json'), readFileSync(process.env.RUNNER_TEMP + '/linky-lock.sha256', 'utf8'));
+          const sources = ['package-lock.json', migration].map(path => ({ path, sha256: digest(path) }));
+          writeFileSync('source-prerequisites.json', JSON.stringify({ schemaVersion: 1, nodeVersion: process.version, pg: '8.23.1', supabaseCLI: '2.122.0', sources, productTestsExecuted: 0, databaseConnections: 0 }, null, 2) + '\n');
+          NODE
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: linky-approved-source-prerequisites
+          path: |
+            package-lock.json
+            supabase/migrations/*_linky_initial_service.sql
+            source-prerequisites.json
+          if-no-files-found: error
+          retention-days: 1

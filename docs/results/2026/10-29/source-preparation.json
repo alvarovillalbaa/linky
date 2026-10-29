@@ -1,0 +1,249 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-29",
+  "project": "Linky",
+  "status": "pre-security-source-preparation",
+  "brief": {
+    "url": "https://app.notion.com/p/408a1ee8bd06805f8520c76bfb0e7c74",
+    "snapshotAsOf": "2026-10-29T07:40:38.373Z",
+    "lastEdited": "2026-10-29T07:40:12.686Z",
+    "verification": "unverified",
+    "completeReturnedBriefRead": true
+  },
+  "providerMetadata": {
+    "organization": {
+      "id": "jnmtatndgpzawemtiukl",
+      "name": "Clous"
+    },
+    "projects": [
+      {
+        "id": "wosqlzijmyiemueoittw",
+        "name": "Still",
+        "status": "ACTIVE_HEALTHY",
+        "region": "eu-central-1",
+        "databaseVersion": "17.11.0.003"
+      },
+      {
+        "id": "faftywddybmgamvseibe",
+        "name": "Dearweek",
+        "status": "ACTIVE_HEALTHY",
+        "region": "eu-central-1",
+        "databaseVersion": "17.11.0.003"
+      },
+      {
+        "id": "lucbdtdsofnybynjpdbp",
+        "name": "Kickoff",
+        "status": "INACTIVE"
+      },
+      {
+        "id": "qavylxvcanfvcdcnnxye",
+        "name": "Professor Assistant",
+        "status": "INACTIVE"
+      },
+      {
+        "id": "thvsunekzckbupgrkyiv",
+        "name": "Clinic",
+        "status": "INACTIVE"
+      }
+    ],
+    "applicationDataQueries": 0,
+    "credentialsRead": 0,
+    "sqlExecuted": 0,
+    "priceOrCapacityQuote": "not-requested",
+    "reuseAuthorization": "not-granted-for-Linky"
+  },
+  "proposedSourceGate": {
+    "proposal": "docs/proposals/persistent-service.md",
+    "status": "awaiting explicit approval",
+    "pg": {
+      "version": "8.23.1",
+      "integrity": "sha512-aL96AHANtWjPLDOLqnhx+ngp9+UK7ETEU8VJrDCGvsSSi/mGLcWYsS6Herg7lmaBJe4uwrfqsa7gTEFaSizDoQ=="
+    },
+    "supabaseCLI": {
+      "version": "2.122.0",
+      "integrity": "sha512-6IQOuHnRFyUgQxi6j6WfxJ6R4sh6vgcyhKxapv/CCDqs3+O/UxMggPxGAPr2eTEt1MhAOpa6xftiNRHIsB7afQ==",
+      "scope": "CI-only, generator/version/help; no connection or application"
+    },
+    "node": "24.x",
+    "workflow": "docs/proposals/source-prerequisites.workflow.yml",
+    "activationBranch": "qa/linky-source-prerequisites",
+    "runner": "ubuntu-latest",
+    "timeoutMinutes": 5,
+    "ciJobsExecuted": 0,
+    "actions": {
+      "checkout": "11d5960a326750d5838078e36cf38b85af677262",
+      "setupNode": "49933ea5288caeca8642d1e84afbd3f7d6820020",
+      "uploadArtifact": "ea165f8d65b6e75b540449e92b4886f43607fa02"
+    },
+    "liveDatabaseChanges": false,
+    "credentialProvisioning": false,
+    "applicationTests": false,
+    "productionDeployment": false
+  },
+  "authoredCases": {
+    "expectedCases": 34,
+    "files": [
+      {
+        "path": "tests/unit/destinations.test.mjs",
+        "expectedCases": 18,
+        "caseNames": [
+          "draft normalization permits unfinished fields and returns detached frozen text",
+          "draft field bounds and Unicode validity preserve complete astral text",
+          "preparing campaign parameters retains unrelated query bytes and the fragment",
+          "owned UTM collisions replace every occurrence while blank fields remove them",
+          "campaign values use URL encoding without becoming extra parameters",
+          "preparation requires title and destination and applies the final URL bound",
+          "scheme credentials controls backslashes and nondefault ports are blocked",
+          "private and special IPv4 literals remain blocked after URL normalization",
+          "local mapped documentation and transition IPv6 literals are blocked",
+          "public literal international hostname and HTTP findings remain unverified warnings",
+          "local reserved and single-label hostnames cannot be prepared",
+          "CSV supports BOM CRLF escaped quotes commas and quoted physical newlines",
+          "CSV returns independent row failures while retaining valid drafts for review",
+          "CSV headers require the exact five columns in the declared order",
+          "CSV rejects unterminated quotes stray quotes trailing quoted text and bare CR",
+          "CSV enforces data-row and actual UTF-8 byte budgets",
+          "CSV reports field bounds per row and rejects malformed source Unicode",
+          "CSV previews are immutable and contain no persistence or execution receipts"
+        ]
+      },
+      {
+        "path": "tests/unit/attribution.test.mjs",
+        "expectedCases": 16,
+        "caseNames": [
+          "an empty batch reports supplied coverage with unknown observed period",
+          "redemption records count receipts without inventing people arrival or conversion",
+          "conversion order in the supplied array does not replace receipt bindings",
+          "campaign dimensions remain distinct and deterministically ordered",
+          "declared sale totals stay separated by currency and zero retains its meaning",
+          "repeated or conflicting event IDs are rejected instead of double counted",
+          "a receipt cannot be supplied as two redemption events or different links",
+          "conversions require a supplied receipt with the same immutable campaign context",
+          "conversion timestamps cannot precede their redemption",
+          "event campaign and conversion shapes reject unknown missing or accessor fields",
+          "amounts require exact nonnegative integers and paired currency with unvalued leads",
+          "timestamps validate real calendar dates and retain normalized observed UTC bounds",
+          "campaign text and event identities are bounded without losing valid Unicode",
+          "batch bounds reject sparse accessors extra properties and oversized inventories",
+          "currency arithmetic rejects overflow instead of rounding declared values",
+          "summaries detach and freeze every returned campaign total and count"
+        ]
+      }
+    ],
+    "executionStatus": "unexecuted; first source gate does not authorize execution"
+  },
+  "staticChecks": {
+    "nodeVersion": "v24.21.0",
+    "modulesParsed": 7,
+    "relativeImportsResolved": 4,
+    "workflowYaml": "parsed by existing Ruby/Psych",
+    "workflowShellBodiesParsed": 6,
+    "workflowInlineNodeBodiesParsed": 4,
+    "productImports": 0,
+    "testsExecuted": 0
+  },
+  "localCLIAttempt": {
+    "operation": "supabase --version",
+    "exitCode": 1,
+    "error": "EPERM writing protected telemetry state before usable version output",
+    "retries": 0,
+    "homeOrPermissionOverride": false
+  },
+  "forwayRevalidation": {
+    "canonical": "https://forway.vercel.app",
+    "deploymentId": "dpl_6FxVqycjqN4SoAyyCwP2VdRU8pmu",
+    "state": "READY",
+    "sourceCommit": "14e7b44a6459602d1a5392eb313273d361db5fad",
+    "newTestApproval": false
+  },
+  "sources": [
+    {
+      "path": ".gitignore",
+      "sha256": "f868be7da39372cc57af032ded2a8a18a15cef8d6d4b46b2981d8e6c7ca8d9c3"
+    },
+    {
+      "path": "AGENTS.md",
+      "sha256": "7b26f395ec5fc9f7b7a117082e51f1bd9193ee7de8dbf5265bb7d7de9561d1b9"
+    },
+    {
+      "path": "LICENSE",
+      "sha256": "7edafcd8ebca4ecabedfad6e3c3d4872ce0ef6b49c3658a8b6e644cfb884d32d"
+    },
+    {
+      "path": "README.md",
+      "sha256": "7230aac627c592b7183b1db24505d88d3e0baefe139f54d6b21d932314cd5e1d"
+    },
+    {
+      "path": "docs/architecture.md",
+      "sha256": "78c9d72ed8aef51f9652b978e30eed8f4fcc7384f896e9d9964f7ff3ae75bdbf"
+    },
+    {
+      "path": "docs/proposals/persistent-service.md",
+      "sha256": "1590e8d5fe53ad166ad5458ba08707948bddff474f9598ca9dbe1904020b05bd"
+    },
+    {
+      "path": "docs/proposals/source-prerequisites.workflow.yml",
+      "sha256": "2edff653eff2ad8d8939df9d958910cdaf76f2ff83be5e55dd27456d0f8c6fbb"
+    },
+    {
+      "path": "docs/schema-contract.md",
+      "sha256": "8c2df78d88a63b218cf9cd3069fcc35a10ce25f30f7a1da5e877b2bfb8698583"
+    },
+    {
+      "path": "docs/spec.md",
+      "sha256": "4a872f2b30f3e68296635d03037a95745f7bf81a3582b4592deb553411ec6235"
+    },
+    {
+      "path": "package.json",
+      "sha256": "b90dd077a9a4756cadd47f065e7f3eb63fc113924cbd7615011b3a456b7be93c"
+    },
+    {
+      "path": "public/icon.svg",
+      "sha256": "7ad2e2b89f67cee7af866dc8786047f314d92f6d2a27379ac05c49b814cdddf2"
+    },
+    {
+      "path": "public/index.html",
+      "sha256": "1296d598e66e60b3086e63707b93b713d6dbad59c35aec173babad4ae33745cf"
+    },
+    {
+      "path": "public/src/app.mjs",
+      "sha256": "bcbed02a9152f5f7538202bd52f96f8d73041d683d338e076dd752e7dd3551e2"
+    },
+    {
+      "path": "public/src/attribution.mjs",
+      "sha256": "26f3bad7066928a8747b3f806979793d563228a046caca4637cf7b09606b1dac"
+    },
+    {
+      "path": "public/src/destinations.mjs",
+      "sha256": "e29d02925f9b484a4137705bfc6ab8b93e9290e5c369cbbae45061c081876c8e"
+    },
+    {
+      "path": "public/src/ui.mjs",
+      "sha256": "67a3e2d0603e26b5da93747fa3442930bba307ff268018f816163f98618b427d"
+    },
+    {
+      "path": "public/styles.css",
+      "sha256": "550c3d14aabf7f60e2b29c7f96527de6eab83e130920bc2ba55aebdeda3ce662"
+    },
+    {
+      "path": "scripts/check.mjs",
+      "sha256": "94212291ddd392b967ff4a0e641308fc16e378d2e56a50c3d1ec9449a49b3ffe"
+    },
+    {
+      "path": "tests/unit/attribution.test.mjs",
+      "sha256": "38c50a92535a758a4adc9a01a49adaefef0e5def8d14f8622b4341856987318f"
+    },
+    {
+      "path": "tests/unit/destinations.test.mjs",
+      "sha256": "e9db7efb8719057971e645987d4f53b451343de1e3ec4f04c56b92b938855871"
+    }
+  ],
+  "exclusions": [
+    "This generated fingerprint cannot hash itself; dated receipts/publication follow-ups are outside this preparation seal."
+  ],
+  "unfinished": [
+    "Real persistent/authenticated Linky service and exact approved migration/check rollout.",
+    "At-scale and hosted behavior, protected-origin enforcement and safety/attribution acceptance.",
+    "No full-project/portfolio completion claim."
+  ]
+}
