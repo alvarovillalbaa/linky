@@ -57,21 +57,56 @@ async function run(name, args, capMs) {
       resolve({ code: child.exitCode, signal: 'drain_deadline' });
     }, capMs + 8000);
   });
-  clearTimeout(timer); clearTimeout(kill); clearTimeout(drainTimer); clearTimeout(interruptKill);
+  clearTimeout(timer); clearTimeout(drainTimer); clearTimeout(interruptKill);
   for (const [signal, stop] of signalStops) process.removeListener(signal, stop);
   activeChild = null;
-  let groupGone = false;
-  try { process.kill(-child.pid, 0); } catch (error) { groupGone = error.code === 'ESRCH'; }
+  const groupAbsent = () => { try { process.kill(-child.pid, 0); return false; } catch (error) { return error.code === 'ESRCH'; } };
+  let groupGone = groupAbsent(); const forcedGroupCleanup = !groupGone;
+  if (!groupGone) {
+    for (const [signal, cap] of [['SIGTERM', 2000], ['SIGKILL', 1000]]) {
+      try { process.kill(-child.pid, signal); } catch {}
+      const deadline = Date.now() + cap;
+      while (!groupAbsent() && Date.now() < deadline) await new Promise(resolve => setTimeout(resolve, 50));
+      groupGone = groupAbsent(); if (groupGone) break;
+    }
+  }
+  clearTimeout(kill);
   const streams = ['stdout', 'stderr'].map(stream => {
     const raw = Buffer.concat(chunks.filter(x => x.stream === stream).map(x => x.data));
     return { stream, bytes: raw.length, sha256: hash(raw), zlibBase64: deflateSync(raw).toString('base64') };
   });
-  receipt.commands.push({ name, args, startedAt: new Date(started).toISOString(), elapsedMs: Date.now() - started, ...result, timedOut, groupGone, closeObserved, interrupted, streams });
-  if (result.code !== 0 || timedOut || !groupGone || !closeObserved || interrupted) throw new Error(`Stage failed: ${name}`);
+  receipt.commands.push({ name, args, startedAt: new Date(started).toISOString(), elapsedMs: Date.now() - started, ...result, timedOut, groupGone, forcedGroupCleanup, closeObserved, interrupted, streams });
+  if (result.code !== 0 || timedOut || !groupGone || forcedGroupCleanup || !closeObserved || interrupted) throw new Error(`Stage failed: ${name}`);
 }
 try {
   await run('source checks', ['scripts/check.mjs'], 60000);
-  if (process.env.LINKY_REUSE_BACKEND_RECEIPT === 'service-attempt-1') {
+  if (process.env.LINKY_CHECK_SUITE === 'service-extension-v2') {
+    assert.equal(process.env.LINKY_DISPOSABLE_DB, 'linky-pg17-extension-v2');
+    assert.equal(before.files.find(x => x.path === 'supabase/migrations/20261105080045_linky_initial_service.sql')?.sha256, '406957876504aeb4c99a42f6488f24c325aaf9c2e41b8dc501f5c227b08249be');
+    const path = 'docs/results/2026/11-05/service-attempt-1.json';
+    const raw = await readFile(path), previous = JSON.parse(raw);
+    assert.equal(hash(raw), '91952a4560a6acc13e653280d95072eaa9faaff324e399807adf2cc3cb48a102');
+    assert.equal(previous.node, process.version); assert.equal(previous.sourceUnchanged, true);
+    assert.deepEqual(previous.before, previous.after);
+    const stablePaths = ['public/src/attribution.mjs', 'public/src/destinations.mjs', 'tests/unit/attribution.test.mjs', 'tests/unit/destinations.test.mjs'];
+    for (const path of stablePaths) assert.deepEqual(before.files.find(x => x.path === path), previous.before.files.find(x => x.path === path));
+    const command = previous.commands.find(x => x.name === 'unit and HTTP boundary checks');
+    assert(command.code === 0 && command.closeObserved && command.groupGone && !command.timedOut && !command.interrupted);
+    for (const path of stablePaths.filter(x => x.startsWith('tests/'))) assert(command.args.includes(path));
+    for (const stream of command.streams) {
+      const bytes = inflateSync(Buffer.from(stream.zlibBase64, 'base64'));
+      assert.equal(bytes.length, stream.bytes); assert.equal(hash(bytes), stream.sha256);
+      if (stream.stream === 'stdout') {
+        const output = bytes.toString('utf8');
+        for (const [key, count] of [['tests',50],['pass',50],['fail',0],['cancelled',0],['skipped',0],['todo',0]]) assert(new RegExp(`^# ${key} ${count}$`, 'm').test(output));
+      }
+    }
+    receipt.suite = 'service-extension-v2';
+    receipt.carriedForward = { path, sha256: hash(raw), sourceCommit: previous.before.head, stablePaths, passedPureCases: 34, repeatedPureCases: 0 };
+    await run('extension HTTP and affected HTTP regressions', ['--test', '--test-reporter=tap', 'tests/unit/http.test.mjs', 'tests/unit/service-extension-http.test.mjs'], 120000);
+    await run('extension migration and real PostgreSQL checks', ['--test', '--test-reporter=tap', 'tests/integration/service-extension.test.mjs'], 180000);
+    await run('extension desktop and narrow browser journeys', ['tests/browser/service-extension.mjs'], 180000);
+  } else if (process.env.LINKY_REUSE_BACKEND_RECEIPT === 'service-attempt-1') {
     const path = 'docs/results/2026/11-05/service-attempt-1.json';
     const raw = await readFile(path); const previous = JSON.parse(raw);
     assert.equal(hash(raw), '91952a4560a6acc13e653280d95072eaa9faaff324e399807adf2cc3cb48a102');
@@ -103,7 +138,7 @@ try {
     await run('unit and HTTP boundary checks', ['--test', '--test-reporter=tap', ...unit], 120000);
     await run('real PostgreSQL checks', ['--test', '--test-reporter=tap', 'tests/integration/database.test.mjs'], 180000);
   }
-  await run('desktop and narrow browser journeys', ['tests/browser/service.mjs'], 180000);
+  if (process.env.LINKY_CHECK_SUITE !== 'service-extension-v2') await run('desktop and narrow browser journeys', ['tests/browser/service.mjs'], 180000);
   receipt.passed = true;
 } catch (error) { receipt.passed = false; receipt.failure = error.message; }
 try { receipt.after = await seal(); assert.deepEqual(receipt.after, before); receipt.sourceUnchanged = true; }

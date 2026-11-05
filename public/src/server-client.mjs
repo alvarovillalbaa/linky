@@ -6,9 +6,14 @@ export class ServiceError extends Error {
   }
 }
 
+export const SERVICE_BODY_LIMIT = 32_768;
+export function bodyByteLength(value) { return new TextEncoder().encode(JSON.stringify(value)).byteLength; }
+
 export async function requestService(path, { method = 'POST', credential = '', body, signal } = {}) {
   if (typeof path !== 'string' || !/^\/api\/v1\/[a-zA-Z0-9/_-]+$/.test(path)
     || !['GET', 'POST'].includes(method)) throw new ServiceError('request_invalid');
+  const encodedBody = body === undefined ? undefined : JSON.stringify(body);
+  if (encodedBody !== undefined && new TextEncoder().encode(encodedBody).byteLength > SERVICE_BODY_LIMIT) throw new ServiceError('request_too_large');
   const controller = new AbortController();
   const abort = () => controller.abort();
   const timer = setTimeout(abort, 15_000);
@@ -20,7 +25,7 @@ export async function requestService(path, { method = 'POST', credential = '', b
     if (credential) headers.Authorization = `Bearer ${credential}`;
     if (body !== undefined) headers['Content-Type'] = 'application/json';
     const response = await fetch(path, {
-      method, headers, body: body === undefined ? undefined : JSON.stringify(body),
+      method, headers, body: encodedBody,
       mode: 'same-origin', credentials: 'omit', redirect: 'error', cache: 'no-store',
       referrerPolicy: 'no-referrer', signal: controller.signal,
     });

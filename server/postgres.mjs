@@ -29,6 +29,12 @@ const statements = Object.freeze({
   recipientInspect: 'SELECT linky_private.recipient_inspect($1::text,$2::jsonb) AS result',
   recipientRedeem: 'SELECT linky_private.recipient_redeem($1::text,$2::jsonb) AS result',
   ownerReport: 'SELECT linky_private.owner_report($1::text,$2::jsonb) AS result',
+  ownerBulkCreateLinks: 'SELECT linky_private.owner_bulk_create_links($1::text,$2::jsonb) AS result',
+  ownerIssueConversionCredential: 'SELECT linky_private.owner_issue_conversion_credential($1::text,$2::jsonb) AS result',
+  ownerListConversionCredentials: 'SELECT linky_private.owner_list_conversion_credentials($1::text,$2::jsonb) AS result',
+  ownerRevokeConversionCredential: 'SELECT linky_private.owner_revoke_conversion_credential($1::text,$2::jsonb) AS result',
+  conversionIngest: 'SELECT linky_private.conversion_ingest($1::text,$2::jsonb) AS result',
+  ownerAttributionReport: 'SELECT linky_private.owner_attribution_report($1::text,$2::jsonb) AS result',
 });
 
 export async function createPostgresRepository(options) {

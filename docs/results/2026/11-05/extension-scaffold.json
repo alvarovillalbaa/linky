@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "path": "supabase/migrations/20261105092311_linky_service_extension.sql",
+  "content": "",
+  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "node": "v24.21.0",
+  "cli": "2.122.0",
+  "databaseConnections": 0,
+  "productTestsExecuted": 0,
+  "sourceCommit": "2fbe14710ed6ad07629cb009479dbed1b054db1e",
+  "run": 42001899632,
+  "job": 127158924383,
+  "startedAt": "2026-11-05T09:22:59Z",
+  "completedAt": "2026-11-05T09:23:15Z",
+  "conclusion": "success",
+  "retirementCommit": "dbdd236",
+  "storageGuard": {
+    "freeGiB": 20.2,
+    "requiredGiB": 38,
+    "exitCode": 2
+  },
+  "v1MigrationPreservedSHA256": "406957876504aeb4c99a42f6488f24c325aaf9c2e41b8dc501f5c227b08249be"
+}

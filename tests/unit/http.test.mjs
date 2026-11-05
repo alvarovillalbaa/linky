@@ -56,7 +56,7 @@ async function deployedRequest(url, { method = 'GET', raw = Buffer.alloc(0), hea
 test('public GET and HEAD status are inert while protected GET cannot disclose or redeem', async () => {
   const f = fixture('recipientRedeem', redeemed);
   const status = await f.handler(request('/status', undefined, { method: 'GET', authorization: null }));
-  assert.deepEqual(await status.json(), { service: 'linky', configuration: 'present', database: 'unverified', conversionsAvailable: false });
+  assert.deepEqual(await status.json(), { service: 'linky', configuration: 'present', database: 'unverified', conversionsAvailable: true });
   const head = await f.handler(request('/status', undefined, { method: 'HEAD' }));
   assert.equal(head.status, 200); assert.equal(await head.text(), '');
   await code(await f.handler(request('/recipient/redeem', undefined, { method: 'GET', authorization: null })), 405, 'method_not_allowed');

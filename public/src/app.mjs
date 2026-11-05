@@ -1,6 +1,6 @@
 import { normalizeLinkDraft, buildDestination, analyzeDestination, parseBulkCsv } from './destinations.mjs';
 import { el, replace, button, fieldError } from './ui.mjs';
-import { requestService, ServiceError } from './server-client.mjs';
+import { requestService, ServiceError, bodyByteLength, SERVICE_BODY_LIMIT } from './server-client.mjs';
 
 const $ = id => document.getElementById(id);
 // Capture the bearer fragment before any asynchronous service work.
@@ -12,6 +12,8 @@ if (recipientPath) history.replaceState(null, '', location.pathname);
 let configured = false, ownerKey = '', workspace = null, links = [], nextCursor = null;
 let selected = null, grants = [], grantNext = null, ownerBusy = false, ownerEpoch = 0;
 let pendingChange = null, grantRecovery = null, recipientBusy = false, inspected = null, redemptionKey = null;
+let conversionCredentials = null, conversionNext = null, conversionRecovery = null;
+let bulkJob = null, bulkSending = false, bulkStopRequested = false;
 let filter = 'all';
 const requests = new Set();
 const fields = ['title', 'destination', 'source', 'medium', 'campaign'];
@@ -81,6 +83,10 @@ $('confirm-dialog').addEventListener('close', () => {
 });
 
 function hasDraft() { return fields.some(key => draft[key].length > 0); }
+const hasCapability = value => typeof value === 'string' && /ly[ori]_[0-9a-f]{64}/u.test(value);
+const uncertainBulk = () => Boolean(bulkJob?.pendingBatch);
+const utcExpiry = value => /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/.test(value)
+  && Number.isFinite(Date.parse(value)) && new Date(value).toISOString() === value && Date.parse(value) > Date.now();
 
 function openComposer() {
   if (!$('composer-dialog').open) $('composer-dialog').showModal();
@@ -146,6 +152,7 @@ function reviewDraft() {
   let normalized, analysis;
   try {
     normalized = normalizeLinkDraft(draft);
+    if (Object.values(normalized).some(hasCapability)) throw new Error('credential_in_metadata');
     analysis = analyzeDestination(normalized.destination);
   } catch {
     localMessage('draft-message', 'Check the five draft fields: a title up to 200 characters, destination up to 2,048, and campaign values up to 100 each. Your text was kept.', true);
@@ -193,41 +200,53 @@ function cancelFileRead() {
 }
 
 function bulkChanged() {
+  if (bulkJob) return;
   bulkRevision++;
   cancelFileRead();
   bulk = null;
   $('bulk-message').hidden = true;
   replace($('bulk-result'));
+  renderBulkProgress(); updateControls();
 }
 
 $('bulk-source').addEventListener('input', bulkChanged);
 
 function reviewBulk() {
+  if (bulkJob) { localMessage('bulk-message', 'Keep the current batch recovery or explicitly clear this review before replacing it.', true); return; }
   cancelFileRead();
   try {
-    bulk = parseBulkCsv($('bulk-source').value);
+    const parsed = parseBulkCsv($('bulk-source').value);
+    const rows = parsed.rows.map(row => row.draft && Object.values(row.draft).some(hasCapability)
+      ? { ...row, destination: null, errors: [...row.errors, { code: 'credential_in_metadata', message: 'Linky credentials cannot be stored as ordinary link metadata.' }] } : row);
+    const validCount = rows.filter(row => row.destination && !row.errors.length).length;
+    bulk = { ...parsed, rows, validCount, invalidCount: rows.length - validCount };
     renderBulk();
     localMessage('bulk-message', `${bulk.rows.length} data rows reviewed: ${bulk.validCount} valid for destination review, ${bulk.invalidCount} needing correction. No records were imported.`);
+    updateControls();
   } catch {
     bulk = null; replace($('bulk-result'));
     localMessage('bulk-message', 'CSV could not be reviewed. Use the exact title,destination,source,medium,campaign header, valid CSV quoting, up to 500 rows and 1 MiB of UTF-8. Your source text was kept.', true);
+    updateControls();
   }
 }
 
 function renderBulk() {
   if (!bulk) { replace($('bulk-result')); return; }
   const expected = bulk;
+  const rows = bulk.rows.map(row => el('tr', { 'data-source-row': row.row },
+    el('th', { scope: 'row' }, `${row.row} / ${row.line}`), el('td', {}, row.draft?.title || 'No accepted title'),
+    el('td', {}, row.errors.length ? el('ul', { className: 'row-errors' }, row.errors.map(error => el('li', {}, error.message)))
+      : el('p', { className: 'row-url' }, row.destination?.url ?? 'No accepted destination')),
+    el('td', {}, row.destination && !row.errors.length ? button('Review as draft →', () => useBulkRow(expected, row)) : 'Correct source row'),
+    el('td', { className: 'bulk-row-status', 'data-row-status': bulkJob?.rows.find(item => item.sourceRow === row.row)?.status ?? (row.errors.length ? 'invalid' : 'unattempted') }, bulkRowOutcome(row.row))));
+  const table = el('table', { className: 'bulk-table' },
+    el('caption', { className: 'visually-hidden' }, bulkJob ? 'Reviewed CSV rows and acknowledged service outcomes.' : 'Supplied CSV rows for review only. No links have been created.'),
+    el('thead', {}, el('tr', {}, ['ROW / LINE', 'TITLE', 'DESTINATION / ISSUE', 'REVIEW', 'SERVICE OUTCOME'].map(label => el('th', { scope: 'col' }, label)))),
+    el('tbody', {}, ...rows));
   replace($('bulk-result'), el('div', { className: 'bulk-counts' },
     el('span', {}, el('strong', {}, bulk.validCount), 'valid for review'), el('span', {}, el('strong', {}, bulk.invalidCount), 'need correction')),
     el('div', { className: 'table-frame' }, el('div', { className: 'table-scroll', tabindex: 0, role: 'region', 'aria-label': 'CSV row review table' },
-      el('table', { className: 'bulk-table' }, el('caption', { className: 'visually-hidden' }, 'Supplied CSV rows for review only. No links have been created.'),
-        el('thead', {}, el('tr', {}, ['ROW / LINE', 'TITLE', 'DESTINATION / ISSUE', 'REVIEW'].map(label => el('th', { scope: 'col' }, label)))),
-        el('tbody', {}, bulk.rows.map(row => el('tr', {},
-          el('th', { scope: 'row' }, `${row.row} / ${row.line}`),
-          el('td', {}, row.draft?.title || 'No accepted title'),
-          el('td', {}, row.errors.length ? el('ul', { className: 'row-errors' }, row.errors.map(error => el('li', {}, error.message)))
-            : el('p', { className: 'row-url' }, row.destination?.url ?? 'No accepted destination')),
-          el('td', {}, row.destination && !row.errors.length ? button('Review as draft →', () => useBulkRow(expected, row)) : 'Correct source row'))))))));
+      table)));
 }
 
 async function useBulkRow(expected, row) {
@@ -252,6 +271,7 @@ $('csv-file').addEventListener('change', event => {
 });
 
 async function importCsv(file) {
+  if (bulkJob) return;
   cancelFileRead();
   const operation = { generation: fileGeneration, revision: bulkRevision };
   pendingFile = operation;
@@ -278,15 +298,16 @@ async function importCsv(file) {
 }
 
 $('clear-bulk').addEventListener('click', async () => {
+  if (bulkSending) return;
   const expected = bulkRevision;
-  if ($('bulk-source').value.length && !await confirmChange('Clear the CSV source and review?', 'This clears only the local CSV text and its review. Your unsent link draft is kept.', 'Clear CSV')) return;
+  if ($('bulk-source').value.length && !await confirmChange('Clear the CSV source and review?', bulkJob ? 'This clears all row recovery identities. Any committed links stay in the service; an unconfirmed reply may already have committed. Keep this tab open to recover it first.' : 'This clears only the local CSV text and its review. Your unsent link draft is kept.', 'Clear CSV')) return;
   if (disposed || expected !== bulkRevision) { localMessage('bulk-message', 'The CSV changed. Nothing was cleared.'); return; }
-  $('bulk-source').value = ''; bulkChanged();
-  localMessage('bulk-message', 'CSV source and review cleared. No shared records were changed.'); $('bulk-source').focus();
+  bulkJob = null; $('bulk-source').value = ''; bulkChanged();
+  localMessage('bulk-message', 'CSV source and recovery cleared. Any already committed links remain in the service.'); $('bulk-source').focus();
 });
 $('open-bulk').addEventListener('click', () => { if (!$('bulk-dialog').open) $('bulk-dialog').showModal(); $('bulk-source').focus(); });
 $('close-bulk').addEventListener('click', () => $('bulk-dialog').close());
-$('bulk-dialog').addEventListener('close', cancelFileRead);
+$('bulk-dialog').addEventListener('close', () => { cancelFileRead(); if (bulkSending) bulkStopRequested = true; });
 
 for (const item of document.querySelectorAll('[data-view]')) item.addEventListener('click', () => navigate(item.dataset.view));
 for (const id of ['recipient-view', 'access-recipient']) $(id)?.addEventListener('click', () => navigate('recipient'));
@@ -306,7 +327,7 @@ $('registry-search').addEventListener('input', () => {
 
 window.addEventListener('hashchange', () => { if (!recipientPath) navigate(location.hash.slice(1)); });
 window.addEventListener('beforeunload', event => {
-  if (hasDraft() || $('bulk-source').value.length || pendingChange || grantRecovery) { event.preventDefault(); event.returnValue = ''; }
+  if (hasDraft() || $('bulk-source').value.length || pendingChange || grantRecovery || conversionRecovery || bulkJob) { event.preventDefault(); event.returnValue = ''; }
 });
 window.addEventListener('pagehide', event => {
   cancelFileRead();
@@ -371,13 +392,15 @@ function installServiceUI() {
     el('button', { id: 'mutation-retry', className: 'button', type: 'button', onClick: runPendingChange }, 'Retry the same change'));
   $('owner-connection').after(recovery);
   recovery.after(el('section', { id: 'grant-recovery', className: 'panel' }));
+  $('grant-recovery').after(el('section', { id: 'conversion-recovery', className: 'panel' }));
   replace($('view-access'), el('div', { className: 'section-topline' }, el('div', {}, el('p', { className: 'eyebrow' }, 'CONTROL DISCLOSURE'),
     el('h2', {}, 'Make the handoff deliberate.'), el('p', { className: 'muted' }, 'Select a saved link to revise it, issue a finite grant, pause access or revoke a grant.'))),
     el('section', { id: 'link-detail', className: 'panel' }),
     el('p', { className: 'boundary-note' }, 'An ordinary URL already learned remains usable outside Linky. Stronger protection requires enforcement at the destination.'));
   replace($('view-attribution'), el('div', { className: 'section-topline' }, el('div', {}, el('p', { className: 'eyebrow' }, 'EVIDENCE, NOT ASSUMPTIONS'),
-    el('h2', {}, 'Follow committed records.'), el('p', { className: 'muted' }, 'Conversion ingestion and bulk persistence are not enabled in this release.')),
-    el('button', { id: 'load-report', className: 'button button-secondary', type: 'button', onClick: loadReport }, 'Load redemption report')),
+    el('h2', {}, 'Follow recorded evidence.'), el('p', { className: 'muted' }, 'Committed redemptions and authenticated lead/sale declarations have separate, bounded cohorts. Declarations are not verified purchases.')),
+    el('div', { className: 'form-actions' }, el('button', { id: 'load-attribution-report', className: 'button', type: 'button', onClick: loadAttributionReport }, 'Load full attribution report'),
+      el('button', { id: 'load-report', className: 'button button-secondary', type: 'button', onClick: loadReport }, 'Redemptions only'))),
     el('section', { id: 'report-content', className: 'panel' }, el('div', { className: 'empty-inline' }, el('h3', {}, 'No report requested.'), el('p', {}, 'No count is inferred before a service response.'))));
   const card = $('view-recipient').querySelector('.recipient-card');
   replace(card, el('img', { src: '/icon.svg', alt: '', width: 44, height: 44 }), el('p', { className: 'eyebrow' }, 'A DELIBERATE HANDOFF'),
@@ -391,27 +414,48 @@ function installServiceUI() {
     el('div', { id: 'recipient-result', hidden: true }), el('p', { className: 'field-help' }, 'Inspect first, then explicitly redeem. An uncertain reply is retried with the same redemption identity. Choose Open destination separately after confirmation.'));
   $('create-disabled-reason').nextElementSibling.id = 'create-shared';
   $('create-shared').addEventListener('click', createLink);
+  const bulkSave = $('bulk-disabled-reason').nextElementSibling;
+  bulkSave.id = 'bulk-save-reviewed'; bulkSave.textContent = 'Save valid reviewed rows'; bulkSave.addEventListener('click', prepareBulkSave);
+  $('bulk-disabled-reason').textContent = 'Only valid reviewed rows are saved after confirmation. Invalid rows remain visible. Each request is bounded to 50 rows and 32 KiB.';
+  $('bulk-result').before(el('section', { id: 'bulk-progress-panel', className: 'bulk-progress-panel', hidden: true },
+    el('h3', {}, 'Persistent import progress'), el('p', { id: 'bulk-progress', role: 'status', 'aria-live': 'polite' }),
+    el('div', { className: 'form-actions' }, el('button', { id: 'bulk-resume', className: 'button', type: 'button', onClick: () => runBulk() }, 'Resume remaining rows'),
+      el('button', { id: 'bulk-retry', className: 'button', type: 'button', onClick: () => runBulk(true) }, 'Retry exact unconfirmed batch'),
+      el('button', { id: 'bulk-stop', className: 'button button-secondary', type: 'button', onClick: () => { bulkStopRequested = true; renderBulkProgress(); } }, 'Stop after this batch'))));
   renderRegistry(); renderSelected(); updateControls();
 }
 
 function updateControls() {
   if (!$('owner-connect')) return;
   const ready = configured && workspace && ownerKey;
+  const locked = ownerBusy || Boolean(pendingChange) || uncertainBulk();
   $('owner-connect').disabled = !configured || ownerBusy || Boolean(workspace);
   $('owner-disconnect').disabled = !ownerKey && !workspace;
   $('owner-key').disabled = ownerBusy || Boolean(workspace);
-  $('refresh-workspace').disabled = !ready || ownerBusy || Boolean(pendingChange);
-  $('next-links').disabled = !ready || ownerBusy || Boolean(pendingChange) || !nextCursor;
-  $('load-report').disabled = !ready || ownerBusy || Boolean(pendingChange);
-  $('create-shared').disabled = !ready || ownerBusy || Boolean(pendingChange) || !reviewed?.destination || reviewed.revision !== draftRevision;
+  $('refresh-workspace').disabled = !ready || locked;
+  $('next-links').disabled = !ready || locked || !nextCursor;
+  $('load-report').disabled = !ready || locked;
+  $('load-attribution-report').disabled = !ready || locked;
+  $('create-shared').disabled = !ready || locked || !reviewed?.destination || reviewed.revision !== draftRevision;
   $('create-disabled-reason').textContent = ready ? 'Only the current reviewed draft is saved. No destination website is fetched.' : 'Connect the shared service and review the current draft before saving.';
   $('mutation-recovery').hidden = !pendingChange;
   if (pendingChange) $('mutation-recovery-message').textContent = `${pendingChange.label}: ${pendingChange.message ?? 'Awaiting a committed acknowledgment.'} Retry keeps the exact same request and identifiers.`;
   $('mutation-retry').disabled = ownerBusy || !ready;
-  for (const control of $('link-detail').querySelectorAll('button,input')) control.disabled = !ready || ownerBusy || Boolean(pendingChange);
+  for (const control of $('link-detail').querySelectorAll('button,input')) control.disabled = !ready || locked;
   if ($('grant-share')) $('grant-share').disabled = false;
   if ($('copy-grant')) $('copy-grant').disabled = ownerBusy || !grantRecovery?.confirmed;
-  if ($('save-revision')) $('save-revision').disabled = !ready || ownerBusy || Boolean(pendingChange) || !$('save-revision').dataset.reviewed;
+  if ($('save-revision')) $('save-revision').disabled = !ready || locked || !$('save-revision').dataset.reviewed;
+  if ($('copy-conversion-key')) $('copy-conversion-key').disabled = ownerBusy || !conversionRecovery?.confirmed;
+  $('bulk-save-reviewed').disabled = !ready || locked || Boolean(bulkJob) || !bulk?.validCount;
+  $('bulk-source').disabled = Boolean(bulkJob);
+  $('choose-csv').disabled = Boolean(bulkJob);
+  $('bulk-form').querySelector('button[type="submit"]').disabled = Boolean(bulkJob);
+  $('clear-bulk').disabled = bulkSending;
+  $('bulk-progress-panel').hidden = !bulkJob;
+  $('bulk-stop').hidden = !bulkSending; $('bulk-stop').disabled = bulkStopRequested;
+  $('bulk-retry').hidden = !bulkJob?.pendingBatch; $('bulk-retry').disabled = !ready || ownerBusy || Boolean(pendingChange);
+  $('bulk-resume').hidden = !bulkJob || bulkJob.nextIndex >= bulkJob.batches.length || Boolean(bulkJob.pendingBatch);
+  $('bulk-resume').disabled = !ready || ownerBusy || Boolean(pendingChange);
   $('recipient-inspect').disabled = !configured || !recipientKey || recipientBusy;
   $('recipient-redeem').disabled = !configured || !recipientKey || !inspected || recipientBusy;
   $('owner-connection').setAttribute('aria-busy', String(ownerBusy));
@@ -436,7 +480,11 @@ async function probeService() {
 
 function clearCredentials() {
   ownerEpoch++; for (const controller of requests) controller.abort();
+  cancelFileRead();
   ownerKey = ''; recipientKey = ''; workspace = null; links = []; selected = null; grants = [];
+  conversionCredentials = null; conversionNext = null; conversionRecovery = null;
+  bulkJob = null; bulkSending = false; bulkStopRequested = false; bulk = null; bulkRevision++;
+  $('bulk-source').value = ''; replace($('bulk-result')); renderBulkProgress();
   nextCursor = null; grantNext = null; pendingChange = null; grantRecovery = null; inspected = null; redemptionKey = null; ownerBusy = false;
   $('owner-key').value = ''; replace($('recipient-result')); $('recipient-result').hidden = true;
   $('owner-state').textContent = 'Disconnected. Reopen the original credential to connect again.';
@@ -444,11 +492,11 @@ function clearCredentials() {
   replace($('report-content'), el('div', { className: 'empty-inline' }, el('h3', {}, 'No report requested.')));
   $('recipient-status').textContent = 'Credential cleared'; $('recipient-message').textContent = 'Reopen the original grant link to continue.';
   for (const id of ['recipient-host', 'recipient-expiry', 'recipient-usage']) $(id).textContent = 'Not checked';
-  renderRegistry(); renderSelected(); renderShareRecovery(); updateControls();
+  renderRegistry(); renderSelected(); renderShareRecovery(); renderConversionRecovery(); updateControls();
 }
 
 async function disconnect() {
-  if ((pendingChange || grantRecovery) && !await confirmChange('Disconnect and clear private recovery?', 'The recipient secret and any unconfirmed change exist only in this tab. Disconnecting cannot undo a committed service action.', 'Disconnect')) return;
+  if ((pendingChange || grantRecovery || conversionRecovery || bulkJob || $('bulk-source').value) && !await confirmChange('Disconnect and clear private recovery?', 'Keys, CSV source and unconfirmed row identities exist only in this tab. Disconnecting clears them; it cannot undo a committed service action. Recover an uncertain reply first.', 'Disconnect')) return;
   clearCredentials();
 }
 
@@ -483,7 +531,7 @@ async function loadLinks(after = null) {
 }
 
 async function refreshLinks(after = null) {
-  if (!workspace || ownerBusy || pendingChange) return;
+  if (!workspace || ownerBusy || pendingChange || uncertainBulk()) return;
   const epoch = ownerEpoch; ownerBusy = true; updateControls();
   try { await loadLinks(after); if (selected) await loadGrants(); renderSelected(); }
   catch (error) { if (epoch === ownerEpoch) notice(messageFor(error), true); }
@@ -502,9 +550,10 @@ function renderRegistry() {
 }
 
 async function selectLink(row) {
-  if (!workspace || ownerBusy || pendingChange) return;
-  if (grantRecovery && selected?.id !== row.id && !await confirmChange('Leave this private share?', 'Copy the private grant first. Its secret cannot be recovered from the server.', 'Leave share')) return;
-  const epoch = ownerEpoch; selected = row; grants = []; grantRecovery = null; ownerBusy = true;
+  if (!workspace || ownerBusy || pendingChange || uncertainBulk()) return;
+  if ((grantRecovery || conversionRecovery) && selected?.id !== row.id && !await confirmChange('Leave private recovery?', 'Copy private keys first. They cannot be recovered from the server.', 'Leave share')) return;
+  const epoch = ownerEpoch; selected = row; grants = []; grantRecovery = null; conversionCredentials = null; conversionRecovery = null; ownerBusy = true;
+  renderShareRecovery(); renderConversionRecovery();
   navigate('access'); renderSelected(); updateControls();
   try { await loadGrants(); if (epoch === ownerEpoch) renderSelected(); }
   catch (error) { if (epoch === ownerEpoch) notice(messageFor(error), true); }
@@ -518,6 +567,7 @@ async function loadGrants() {
   if (epoch !== ownerEpoch || selected !== held || disposed) return;
   if (!Array.isArray(result?.grants) || result.grants.length > 50) throw new ServiceError('response_invalid');
   grants = result.grants; grantNext = result.nextCursor ?? null;
+  await loadConversionCredentials(held, epoch);
 }
 
 function createLink() {
@@ -528,7 +578,7 @@ function createLink() {
 }
 
 function queueChange(label, path, body) {
-  if (!workspace || ownerBusy || pendingChange) return;
+  if (!workspace || ownerBusy || pendingChange || uncertainBulk()) return;
   pendingChange = { label, path, body: structuredClone(body), epoch: ownerEpoch };
   void runPendingChange();
 }
@@ -544,8 +594,11 @@ async function runPendingChange() {
       || acknowledgment.mutationKey !== held.body.mutationKey || !Number.isSafeInteger(acknowledgment.version) || acknowledgment.version < 1
       || typeof acknowledgment.replayed !== 'boolean' || (held.body.state && acknowledgment.state !== held.body.state)
       || (held.body.grantId && acknowledgment.grantId !== held.body.grantId)
+      || (held.body.credentialId && acknowledgment.credentialId !== held.body.credentialId)
       || (held.body.revisionId && acknowledgment.revisionId !== held.body.revisionId)) throw new ServiceError('response_invalid', { uncertain: true });
     if (grantRecovery && held.path === '/grants/issue') grantRecovery.confirmed = true;
+    if (conversionRecovery && held.path === '/conversion-credentials/issue') conversionRecovery.confirmed = true;
+    renderShareRecovery(); renderConversionRecovery();
     pendingChange = null; notice(`${held.label} confirmed by the service.`);
     if ($('composer-dialog').open && held.path === '/links/create') $('composer-dialog').close();
     await loadLinks();
@@ -557,6 +610,7 @@ async function runPendingChange() {
       if (pendingChange === held) held.message = messageFor(error) + (error?.uncertain ? ' The reply is uncertain; keep this tab open.' : ' The identical request is retained.');
       notice(pendingChange === held ? messageFor(error) : 'The change was committed, but the refreshed list could not be loaded. Use Refresh workspace; do not create a replacement change.', true);
       renderShareRecovery();
+      renderConversionRecovery();
     }
   } finally { if (epoch === ownerEpoch) { ownerBusy = false; updateControls(); } }
 }
@@ -586,6 +640,7 @@ function renderSelected() {
     event.preventDefault();
     try {
       revisionDraft = buildDestination(Object.fromEntries(fields.map(key => [key, $('revision-' + key).value]))).draft;
+      if (Object.values(revisionDraft).some(hasCapability)) throw new Error('credential_in_metadata');
       $('revision-review').textContent = buildDestination(revisionDraft).url + ' · Reputation unchecked. Existing grants keep their previous revision.';
       $('save-revision').dataset.reviewed = 'true'; updateControls();
     } catch { revisionDraft = null; delete $('save-revision').dataset.reviewed; $('save-revision').disabled = true; $('revision-review').textContent = 'Use a title and an accepted HTTP(S) destination. Inputs were kept.'; }
@@ -605,7 +660,7 @@ function renderSelected() {
     event.preventDefault(); if (selected !== held || ownerBusy || pendingChange) return;
     if (grantRecovery) { localMessage('grant-message', 'Keep or copy the current private share before choosing New grant.', true); return; }
     const label = $('grant-label').value.trim(), maxUses = Number($('grant-uses').value), expiresAt = $('grant-expiry').value.trim();
-    if (!label || !Number.isSafeInteger(maxUses) || maxUses < 1 || maxUses > 1000000 || !/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/.test(expiresAt)
+    if (!label || hasCapability(label) || !Number.isSafeInteger(maxUses) || maxUses < 1 || maxUses > 1000000 || !/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/.test(expiresAt)
       || !Number.isFinite(Date.parse(expiresAt)) || new Date(expiresAt).toISOString() !== expiresAt || Date.parse(expiresAt) <= Date.now()) {
       localMessage('grant-message', 'Enter a label, a positive finite use limit and a future canonical UTC expiry.', true); return;
     }
@@ -626,7 +681,7 @@ function renderSelected() {
         if (selected !== held || ownerBusy || pendingChange) return;
         queueChange('Revoke recipient grant', '/grants/revoke', { workspaceId: workspace.id, mutationKey: crypto.randomUUID(), linkId: held.id, grantId: grant.id, expectedVersion: held.version });
       }, 'button button-secondary')))));
-  renderShareRecovery(); updateControls();
+  renderConversionTools(); renderShareRecovery(); renderConversionRecovery(); updateControls();
 }
 
 function renderShareRecovery() {
@@ -676,6 +731,10 @@ async function redeemGrant() {
     $('recipient-status').textContent = result.replayed ? 'Committed receipt recovered' : 'Redemption committed';
     $('recipient-message').textContent = 'The service returned a committed receipt. Opening the destination is a separate choice; no navigation has occurred.';
     replace($('recipient-result'), el('p', {}, `Receipt ${result.receiptId} · use ${result.useNumber} · ${result.redeemedAt}`),
+      el('button', { id: 'copy-receipt', type: 'button', className: 'button button-secondary', onClick: async () => {
+        try { await navigator.clipboard.writeText(result.receiptId); if (recipientKey === key) $('recipient-message').textContent = 'Committed receipt ID copied. It is not a recipient credential or proof of a sale.'; }
+        catch { if (recipientKey === key) $('recipient-message').textContent = 'Select the displayed receipt ID to copy it manually.'; }
+      } }, 'Copy receipt ID'),
       el('a', { id: 'recipient-destination', className: 'button', href: destination.href, target: '_blank', rel: 'noopener noreferrer', referrerpolicy: 'no-referrer' }, 'Open destination'));
     $('recipient-result').hidden = false; $('recipient-redeem').textContent = 'Recover same redemption';
   } catch (error) { if (recipientKey === key && !disposed) { $('recipient-status').textContent = 'Redemption not confirmed'; $('recipient-message').textContent = messageFor(error) + ' Retry retains the same redemption identity.'; $('recipient-redeem').textContent = 'Retry same redemption'; } }
@@ -701,8 +760,217 @@ function renderReport(result) {
     || result.conversionsAvailable !== false || result.campaigns.some(row => !row.campaign || !Number.isSafeInteger(row.redemptions) || row.redemptions < 0)) throw new ServiceError('response_invalid');
   replace($('report-content'), el('div', { className: 'report-summary' }, el('h3', {}, el('span', { id: 'report-count' }, String(result.redemptions)), ' committed redemptions in this bounded cohort'),
     el('p', { id: 'report-coverage' }, `UTC from ${coverage.from} (included) to ${coverage.to} (excluded). Limit ${coverage.limit}. ${coverage.truncated ? 'More records exist; this is not the complete period.' : 'The service reports this period was not truncated.'}`),
-    el('p', {}, 'These are committed receipts, not unique people, arrival or sales. Conversion ingestion is unavailable; no conversion count is asserted.')),
+    el('p', {}, 'These are committed receipts, not unique people, arrival or sales. This redemption-only report excludes declarations. Load the full attribution report to see them.')),
     el('div', { className: 'report-rows' }, ...result.campaigns.map(row => el('article', { className: 'grant-row campaign-row' },
       el('div', {}, el('strong', {}, row.campaign.campaign || 'No campaign'), el('p', {}, `Source: ${row.campaign.source || 'unspecified'} · medium: ${row.campaign.medium || 'unspecified'}`)),
       el('strong', {}, String(row.redemptions))))));
+}
+
+function bulkRowOutcome(sourceRow) {
+  const row = bulkJob?.rows.find(item => item.sourceRow === sourceRow);
+  if (!row) return 'Not submitted';
+  const labels = { invalid: 'Invalid · not submitted', unattempted: 'Unattempted', sending: 'Awaiting acknowledgment', uncertain: 'Unconfirmed · retain this tab', committed: 'Committed', replayed: 'Replayed · already committed', conflict: 'Conflict', rejected: 'Refused' };
+  return el('div', {}, el('strong', {}, labels[row.status]), row.error ? el('p', { className: 'field-help' }, row.error) : null,
+    ['conflict', 'rejected'].includes(row.status) ? button('Retry row ' + row.sourceRow, () => runBulk(true, row), 'quiet') : null);
+}
+
+async function prepareBulkSave() {
+  if (!configured || !workspace || ownerBusy || pendingChange || bulkJob || !bulk?.validCount) return;
+  const expected = bulk, revision = bulkRevision, epoch = ownerEpoch;
+  const rows = bulk.rows.map(row => {
+    const item = { sourceRow: row.row, line: row.line, status: row.errors.length ? 'invalid' : 'unattempted', error: null, intent: null };
+    if (row.destination && !row.errors.length) {
+      const linkId = crypto.randomUUID();
+      item.intent = { mutationKey: crypto.randomUUID(), linkId, revisionId: crypto.randomUUID(), slug: 'ly-' + linkId, draft: { ...row.destination.draft } };
+    }
+    return item;
+  });
+  const batches = []; let batch = [];
+  for (const row of rows.filter(item => item.intent)) {
+    const proposed = [...batch, row];
+    if (batch.length && (proposed.length > 50 || bodyByteLength({ workspaceId: workspace.id, rows: proposed.map(item => item.intent) }) > SERVICE_BODY_LIMIT)) {
+      batches.push(batch); batch = [];
+    }
+    if (bodyByteLength({ workspaceId: workspace.id, rows: [row.intent] }) > SERVICE_BODY_LIMIT) {
+      row.status = 'invalid'; row.error = 'This row exceeds the request byte limit; no write was attempted.';
+    } else batch.push(row);
+  }
+  if (batch.length) batches.push(batch);
+  const valid = rows.filter(row => row.intent && row.status === 'unattempted').length;
+  if (!valid) { localMessage('bulk-message', 'No valid row fits the service limits. Nothing was sent.', true); return; }
+  if (!await confirmChange('Save the valid reviewed rows?', `${valid} reviewed rows will be saved in ${batches.length} bounded requests. ${rows.length - valid} invalid rows will not be submitted. Each row has a stable identity; this tab is required to recover uncertain replies.`, 'Save valid rows')) return;
+  if (disposed || ownerEpoch !== epoch || bulk !== expected || bulkRevision !== revision || ownerBusy || pendingChange || bulkJob) return;
+  bulkJob = { epoch, workspaceId: workspace.id, sourceText: $('bulk-source').value, rows, batches, nextIndex: 0, pendingBatch: null };
+  renderBulk(); renderBulkProgress(); await runBulk();
+}
+
+function renderBulkProgress() {
+  if (!$('bulk-progress-panel')) return;
+  if (!bulkJob) { $('bulk-progress-panel').hidden = true; return; }
+  const counts = Object.fromEntries(['committed', 'replayed', 'invalid', 'conflict', 'rejected', 'unattempted', 'uncertain', 'sending'].map(status => [status, bulkJob.rows.filter(row => row.status === status).length]));
+  $('bulk-progress').textContent = `${counts.committed} committed · ${counts.replayed} replayed · ${counts.invalid} invalid · ${counts.conflict} conflict · ${counts.rejected} refused · ${counts.unattempted} unattempted · ${counts.uncertain + counts.sending} awaiting confirmation. ${bulkJob.pendingBatch ? 'Recover the exact unconfirmed batch before other writes.' : bulkStopRequested ? 'Stopping after the current batch; remaining rows require Resume.' : 'Only committed/replayed rows are known saved.'}`;
+  updateControls();
+}
+
+async function runBulk(oneOnly = false, retryRow = null) {
+  const job = bulkJob;
+  if (!job || ownerBusy || pendingChange || !workspace || ownerEpoch !== job.epoch || workspace.id !== job.workspaceId) return;
+  if (retryRow && (job.pendingBatch || !job.rows.includes(retryRow) || !['conflict', 'rejected'].includes(retryRow.status))) return;
+  if (retryRow) job.pendingBatch = { rows: [retryRow], body: { workspaceId: job.workspaceId, rows: [retryRow.intent] }, advanceTo: null };
+  if (oneOnly && !job.pendingBatch) return;
+  ownerBusy = true; bulkSending = true; bulkStopRequested = false; updateControls();
+  try {
+    for (;;) {
+      if (job !== bulkJob || ownerEpoch !== job.epoch || disposed || bulkStopRequested) break;
+      if (!job.pendingBatch) {
+        if (job.nextIndex >= job.batches.length) break;
+        const rows = job.batches[job.nextIndex];
+        job.pendingBatch = { rows, body: { workspaceId: job.workspaceId, rows: rows.map(row => row.intent) }, advanceTo: job.nextIndex + 1 };
+      }
+      const pending = job.pendingBatch;
+      for (const row of pending.rows) { row.status = 'sending'; row.error = null; }
+      renderBulk(); renderBulkProgress();
+      let result;
+      try {
+        result = await api('/links/bulk-create', pending.body);
+        if (job !== bulkJob || ownerEpoch !== job.epoch || disposed) return;
+        if (!Array.isArray(result?.outcomes) || result.outcomes.length !== pending.rows.length) throw new ServiceError('response_invalid', { uncertain: true });
+        result.outcomes.forEach((outcome, index) => {
+          const row = pending.rows[index];
+          if (outcome.sourceIndex !== index || outcome.mutationKey !== row.intent.mutationKey || outcome.linkId !== row.intent.linkId || outcome.revisionId !== row.intent.revisionId
+            || !['committed', 'replayed', 'error'].includes(outcome.status)
+            || (outcome.status === 'error' ? outcome.version !== null || typeof outcome.error !== 'string' || !/^[a-z][a-z0-9_]{0,63}$/.test(outcome.error)
+              : !Number.isSafeInteger(outcome.version) || outcome.version < 1 || outcome.error !== null)) throw new ServiceError('response_invalid', { uncertain: true });
+        });
+      } catch (error) {
+        if (job !== bulkJob || ownerEpoch !== job.epoch || disposed) return;
+        for (const row of pending.rows) { row.status = 'uncertain'; row.error = 'No committed acknowledgment received. Retry preserves the exact batch and row identities.'; }
+        localMessage('bulk-message', 'Batch not confirmed. Keep this tab open and choose Retry exact unconfirmed batch; no automatic retry was sent.', true);
+        break;
+      }
+      result.outcomes.forEach((outcome, index) => {
+        const row = pending.rows[index];
+        row.status = outcome.status === 'error' ? outcome.error === 'conflict' ? 'conflict' : 'rejected' : outcome.status;
+        row.error = outcome.error; row.version = outcome.version;
+      });
+      if (pending.advanceTo !== null) job.nextIndex = pending.advanceTo;
+      job.pendingBatch = null; renderBulk(); renderBulkProgress();
+      if (oneOnly) break;
+      await new Promise(resolve => setTimeout(resolve, 0));
+    }
+  } finally {
+    if (job === bulkJob && ownerEpoch === job.epoch) {
+      ownerBusy = false; bulkSending = false; renderBulk(); renderBulkProgress(); updateControls();
+      if (!job.pendingBatch) localMessage('bulk-message', job.nextIndex < job.batches.length ? 'Import paused between batches. Choose Resume remaining rows when ready.' : 'All planned batches returned. Review each outcome, then Refresh workspace to load saved links. Refused/invalid rows are not reported as saved.');
+    }
+  }
+}
+
+async function loadConversionCredentials(held, epoch) {
+  try {
+    const value = await api('/conversion-credentials/list', { workspaceId: workspace.id, linkId: held.id, limit: 50, after: null });
+    if (selected !== held || ownerEpoch !== epoch || disposed) return;
+    if (!Array.isArray(value?.credentials) || value.credentials.length > 50 || value.credentials.some(row => row.purpose !== 'conversion_ingest' || row.linkId !== held.id)) throw new ServiceError('response_invalid');
+    conversionCredentials = value.credentials; conversionNext = value.nextCursor ?? null;
+  } catch {
+    if (selected === held && ownerEpoch === epoch && !disposed) { conversionCredentials = null; conversionNext = null; }
+  }
+}
+
+function renderConversionTools() {
+  if (!selected || !workspace) return;
+  const held = selected;
+  const form = el('form', { id: 'conversion-form', className: 'service-form' }, el('h3', {}, 'Write-only conversion credential'),
+    el('p', { className: 'field-help' }, 'Pinned to this link and its current destination revision. It can declare events for matching committed receipts; it cannot manage links or redeem access.'),
+    el('label', { for: 'conversion-label' }, 'Conversion credential label'), el('input', { id: 'conversion-label', maxlength: 200, required: true }),
+    el('label', { for: 'conversion-expiry' }, 'Conversion credential expires at (UTC)'), el('input', { id: 'conversion-expiry', maxlength: 24, required: true }),
+    el('button', { id: 'issue-conversion', className: 'button', type: 'submit' }, 'Issue conversion credential'),
+    el('p', { id: 'conversion-message', className: 'field-help', role: 'status' }));
+  form.querySelector('#conversion-expiry').value = new Date(Date.now() + 86_400_000).toISOString();
+  form.addEventListener('submit', event => {
+    event.preventDefault(); if (selected !== held || ownerBusy || pendingChange || uncertainBulk()) return;
+    if (conversionRecovery) { localMessage('conversion-message', 'Copy or explicitly clear the current private credential before issuing another.', true); return; }
+    const label = $('conversion-label').value.trim(), expiresAt = $('conversion-expiry').value.trim();
+    if (!label || hasCapability(label) || !utcExpiry(expiresAt)) { localMessage('conversion-message', 'Use a label without credentials and an explicit future canonical UTC expiry.', true); return; }
+    const bytes = crypto.getRandomValues(new Uint8Array(32));
+    const ingestKey = 'lyi_' + Array.from(bytes, value => value.toString(16).padStart(2, '0')).join('');
+    const body = { workspaceId: workspace.id, mutationKey: crypto.randomUUID(), linkId: held.id, revisionId: held.currentRevisionId, expectedVersion: held.version, credentialId: crypto.randomUUID(), ingestKey, label, expiresAt };
+    conversionRecovery = { body, confirmed: false }; renderConversionRecovery();
+    queueChange('Issue conversion credential', '/conversion-credentials/issue', body);
+  });
+  const listing = el('section', { id: 'conversion-credentials', className: 'conversion-credentials', 'aria-label': 'Conversion credentials' }, el('h3', {}, 'Conversion credentials'),
+    el('p', { className: 'field-help' }, conversionCredentials === null ? 'Credential list unavailable or not loaded. No count is assumed.' : `${conversionCredentials.length} records in this bounded page${conversionNext ? '; more exist' : ''}. Secrets are never returned.`),
+    ...(conversionCredentials ?? []).map(row => el('article', { className: 'credential-row grant-row' }, el('div', {}, el('strong', {}, row.label),
+      el('p', {}, `Write-only declarations · expires ${row.expiresAt} · ${row.revokedAt ? 'revoked' : 'not revoked'}`), el('code', {}, row.id), el('p', {}, 'Pinned revision: ' + row.revisionId)),
+    row.revokedAt ? null : button('Revoke conversion ' + row.label, async () => {
+      if (selected !== held || ownerBusy || pendingChange || uncertainBulk() || !await confirmChange('Revoke this conversion credential?', 'New declarations and retries will require current authorization. Existing accepted declarations remain recorded.', 'Revoke conversion credential')) return;
+      if (selected !== held || ownerBusy || pendingChange || uncertainBulk()) return;
+      queueChange('Revoke conversion credential', '/conversion-credentials/revoke', { workspaceId: workspace.id, mutationKey: crypto.randomUUID(), linkId: held.id, credentialId: row.id, expectedVersion: held.version });
+    }, 'button button-secondary'))));
+  $('link-detail').append(el('section', { className: 'conversion-tools' }, form, listing));
+}
+
+function renderConversionRecovery() {
+  const node = $('conversion-recovery'); if (!node) return;
+  if (!conversionRecovery) { replace(node); return; }
+  const held = conversionRecovery;
+  const key = el('textarea', { id: 'conversion-key', readonly: true, rows: 2, spellcheck: 'false', 'aria-label': 'Private write-only conversion credential' }); key.value = held.body.ingestKey;
+  const copy = button('Copy private conversion key', async () => {
+    if (conversionRecovery !== held || !held.confirmed) return;
+    try { await navigator.clipboard.writeText(key.value); if (conversionRecovery === held) notice('Private write-only key copied. Keep it on your trusted integration server.'); }
+    catch { if (conversionRecovery === held) notice('Select and copy the key manually. It is not recoverable from the service.', true); }
+  }, 'button button-secondary'); copy.id = 'copy-conversion-key';
+  replace(node, el('h3', {}, held.confirmed ? 'Private conversion credential ready' : 'Conversion issue not yet confirmed'),
+    el('p', {}, 'This key exists only in this tab. Copy it privately; never put it in a URL, browser analytics, download or public source.'), key, copy,
+    held.confirmed ? button('Clear private conversion key', async () => {
+      if (conversionRecovery !== held || !await confirmChange('Clear the private conversion key?', 'Keep your private integration copy first. The service cannot recover this secret; the issued credential is not revoked by clearing this tab.', 'Clear private key')) return;
+      if (conversionRecovery === held) { conversionRecovery = null; renderConversionRecovery(); }
+    }, 'quiet') : null,
+    el('div', { id: 'conversion-instructions', className: 'integration-instructions' }, el('h4', {}, 'Connect your server, not browser analytics'),
+      el('p', {}, 'Public credential ID: ', el('code', { id: 'conversion-credential-id' }, held.body.credentialId)),
+      el('p', {}, `Send HTTPS POST requests to ${location.origin}/api/v1/conversions/ingest with Authorization: Bearer <your private key>. No example event is sent by this page.`),
+      el('p', {}, `Credential ID: ${held.body.credentialId}. Scope: link ${held.body.linkId}, revision ${held.body.revisionId}. Use a matching committed receipt ID, copied explicitly after recipient redemption.`),
+      el('p', {}, 'JSON fields: credentialId, receiptId, eventKey (a stable UUID), kind (lead_declared or sale_declared), amountMinor, currency and declaredAt (canonical UTC ISO). Leads use null amount/currency. Sales use both null when value is unknown, or a nonnegative safe integer in minor units and a three-letter currency code. Retry the same event identity and unchanged declaration to recover an acknowledgment. A declaration is not a verified purchase.')));
+  updateControls();
+}
+
+async function loadAttributionReport() {
+  if (!workspace || ownerBusy || pendingChange || uncertainBulk()) return;
+  const epoch = ownerEpoch; ownerBusy = true; updateControls();
+  try {
+    const result = await api('/reports/attribution', { workspaceId: workspace.id, from: null, to: null, limit: 50 });
+    if (!disposed && epoch === ownerEpoch) renderAttributionReport(result);
+  } catch (error) { if (epoch === ownerEpoch) notice(messageFor(error), true); }
+  finally { if (epoch === ownerEpoch) { ownerBusy = false; updateControls(); } }
+}
+
+function renderAttributionReport(value) {
+  const r = value?.redemptions, d = value?.declarations;
+  const count = x => Number.isSafeInteger(x) && x >= 0;
+  const campaign = x => x && ['source', 'medium', 'campaign'].every(key => typeof x[key] === 'string' && x[key].length <= 100);
+  const coverage = (x, kind, records) => x?.kind === kind && count(x.recordCount) && x.recordCount === records && Number.isSafeInteger(x.limit) && x.limit >= 1 && x.limit <= 50
+    && records <= x.limit && typeof x.from === 'string' && typeof x.to === 'string' && typeof x.truncated === 'boolean';
+  if (value?.conversionsAvailable !== true || !count(r?.count) || !count(d?.total) || !count(d.leads) || !count(d.sales) || !count(d.unknownValueSales)
+    || d.leads + d.sales !== d.total || d.unknownValueSales > d.sales || !coverage(r.coverage, 'committed_redemptions', r.count)
+    || !coverage(d.coverage, 'accepted_conversion_declarations', d.total) || !Array.isArray(r.campaigns) || r.campaigns.length > 50
+    || r.campaigns.some(row => !campaign(row.campaign) || !count(row.count)) || !Array.isArray(d.campaigns) || d.campaigns.length > 50
+    || d.campaigns.some(row => !campaign(row.campaign) || !count(row.leads) || !count(row.sales) || !count(row.unknownValueSales))
+    || !Array.isArray(d.currencies) || d.currencies.length > 50 || d.currencies.some(row => typeof row.currency !== 'string' || !/^[A-Z]{3}$/.test(row.currency) || typeof row.amountMinor !== 'string'
+      || !/^(0|[1-9][0-9]{0,31})$/.test(row.amountMinor) || !count(row.sales))) throw new ServiceError('response_invalid');
+  const metrics = [['Committed redemptions', r.count, 'attribution-redemptions'], ['Declared leads', d.leads, 'attribution-leads'], ['Declared sales', d.sales, 'attribution-sales'], ['Sales with unknown value', d.unknownValueSales, 'attribution-unknown-sales']];
+  const coverageText = (x, label) => `${label}: ${x.from} (included) to ${x.to} (excluded), limit ${x.limit}, ${x.recordCount} records. ${x.truncated ? 'Truncated; more records exist.' : 'Not truncated in this service response.'}`;
+  replace($('report-content'), el('div', { className: 'report-summary' }, el('h3', {}, 'Recorded attribution, with separate cohorts'),
+    el('p', {}, 'Redemptions use committed time. Declarations use accepted time, not merchant-declared time. Counts do not establish unique people, arrival or verified purchases.'),
+    el('p', { id: 'redemption-coverage' }, coverageText(r.coverage, 'Redemption cohort')), el('p', { id: 'declaration-coverage' }, coverageText(d.coverage, 'Declaration cohort'))),
+    el('div', { className: 'metric-grid attribution-metrics' }, ...metrics.map(([label, number, id]) => el('article', { className: 'metric' }, el('p', {}, label), el('strong', { id }, String(number))))),
+    el('section', { className: 'report-rows', 'aria-label': 'Declared monetary totals' }, el('h3', {}, 'Declared amounts by currency'),
+      el('p', { className: 'field-help' }, 'Exact minor-unit strings; currencies are not combined or assigned an assumed decimal scale. Unknown-value sales are excluded. Known zero-valued sales remain included.'),
+      ...d.currencies.map(row => el('article', { className: 'grant-row currency-total', 'data-currency': row.currency }, el('strong', {}, row.currency),
+        el('p', {}, el('span', { className: 'minor-unit-total' }, row.amountMinor), ` minor units · ${row.sales} declared sales`))),
+      d.currencies.length ? null : el('p', {}, 'No known-value currency total in this returned cohort.')),
+    el('section', { className: 'report-rows', 'aria-label': 'Redemptions by campaign' }, el('h3', {}, 'Redemptions by campaign'),
+      ...r.campaigns.map(row => el('article', { className: 'grant-row' }, el('div', {}, el('strong', {}, row.campaign.campaign || 'No campaign'), el('p', {}, `${row.campaign.source || 'unspecified'} / ${row.campaign.medium || 'unspecified'}`)), el('span', {}, String(row.count))))),
+    el('section', { className: 'report-rows', 'aria-label': 'Declarations by campaign' }, el('h3', {}, 'Declarations by campaign'),
+      ...d.campaigns.map(row => el('article', { className: 'grant-row' }, el('div', {}, el('strong', {}, row.campaign.campaign || 'No campaign'), el('p', {}, `${row.campaign.source || 'unspecified'} / ${row.campaign.medium || 'unspecified'}`)),
+        el('p', {}, `${row.leads} declared leads · ${row.sales} declared sales · ${row.unknownValueSales} unknown-value sales`)))));
 }
