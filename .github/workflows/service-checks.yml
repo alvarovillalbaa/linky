@@ -1,0 +1,71 @@
+name: Linky persistent service checks
+on:
+  push:
+    branches: [qa/linky-service-20261105]
+permissions:
+  contents: read
+jobs:
+  acceptance:
+    if: github.ref == 'refs/heads/qa/linky-service-20261105'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: authored-ci-only
+          POSTGRES_DB: linky_checks
+        ports: [5432:5432]
+        options: >-
+          --health-cmd "pg_isready -U postgres -d linky_checks"
+          --health-interval 5s --health-timeout 5s --health-retries 12
+    env:
+      CI: 'true'
+      LINKY_DISPOSABLE_DATABASE: 'true'
+      LINKY_DISPOSABLE_DB: linky-pg17-ci-v1
+      LINKY_TEST_DATABASE_URL: postgresql://postgres:authored-ci-only@127.0.0.1:5432/linky_checks
+      PLAYWRIGHT_BROWSERS_PATH: /tmp/linky-browser-20261105
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24.21.0
+      - name: Install exact application driver and CI-only browser tooling
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm install --prefix "$RUNNER_TEMP/linky-tools" --no-package-lock --ignore-scripts --no-audit --no-fund playwright@1.64.1
+          node "$RUNNER_TEMP/linky-tools/node_modules/playwright/cli.js" install --with-deps chromium
+          echo "LINKY_PLAYWRIGHT_MODULE=$RUNNER_TEMP/linky-tools/node_modules/playwright/index.mjs" >> "$GITHUB_ENV"
+      - name: Mark the task-owned disposable database
+        run: |
+          node --input-type=module <<'NODE'
+          import { Client } from 'pg';
+          const client = new Client({ connectionString: process.env.LINKY_TEST_DATABASE_URL, connectionTimeoutMillis: 5000 });
+          try { await client.connect(); await client.query("COMMENT ON DATABASE linky_checks IS 'linky-disposable-ci-v1'"); }
+          finally { await client.end(); }
+          NODE
+      - name: Execute bounded service acceptance
+        run: node scripts/ci-checks.mjs
+      - name: Remove only task-created installations
+        if: always()
+        run: |
+          node --input-type=module <<'NODE'
+          import { rmSync, existsSync, lstatSync, readFileSync } from 'node:fs';
+          import { resolve } from 'node:path';
+          const receiptPath = process.env.RUNNER_TEMP + '/linky-check-receipt.json';
+          if (!existsSync(receiptPath)) throw new Error('No lifecycle receipt; retain installations for runner teardown');
+          const receipt = JSON.parse(readFileSync(receiptPath, 'utf8'));
+          if (receipt.interrupted || receipt.commands.some(command => !command.groupGone || !command.closeObserved)) throw new Error('A command lifecycle is uncertain; retain installations for runner teardown');
+          const browser = receipt.commands.find(command => command.name === 'desktop and narrow browser journeys');
+          if (browser && browser.code !== 0) throw new Error('Browser lifecycle failed; retain installations for runner teardown');
+          const paths = [resolve('node_modules'), process.env.RUNNER_TEMP + '/linky-tools', '/tmp/linky-browser-20261105'];
+          for (const path of paths) {
+            if (existsSync(path) && !lstatSync(path).isDirectory()) throw new Error('Unexpected cleanup target type');
+            rmSync(path, { recursive: true, force: true });
+          }
+          if (paths.some(existsSync)) throw new Error('Owned installation remains');
+          console.log('LINKY_INSTALLATIONS_CLEANED=true');
+          NODE
