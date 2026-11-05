@@ -436,6 +436,7 @@ function updateControls() {
   $('next-links').disabled = !ready || locked || !nextCursor;
   $('load-report').disabled = !ready || locked;
   $('load-attribution-report').disabled = !ready || locked;
+  for (const control of $('registry-body').querySelectorAll('button')) control.disabled = !ready || locked;
   $('create-shared').disabled = !ready || locked || !reviewed?.destination || reviewed.revision !== draftRevision;
   $('create-disabled-reason').textContent = ready ? 'Only the current reviewed draft is saved. No destination website is fetched.' : 'Connect the shared service and review the current draft before saving.';
   $('mutation-recovery').hidden = !pendingChange;
@@ -547,6 +548,7 @@ function renderRegistry() {
     el('td', {}, 'Finite grants'), el('td', {}, row.campaign?.campaign || '—'), el('td', {}, row.state),
     el('td', {}, button('Manage ' + row.label, () => selectLink(row), 'quiet')))));
   $('registry-status').textContent = workspace ? `${links.length} records in this service page${nextCursor ? ' · more available' : ''}` : 'No shared records loaded';
+  updateControls();
 }
 
 async function selectLink(row) {

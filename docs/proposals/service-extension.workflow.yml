@@ -26,6 +26,7 @@ jobs:
       LINKY_DISPOSABLE_DATABASE: 'true'
       LINKY_DISPOSABLE_DB: linky-pg17-extension-v2
       LINKY_CHECK_SUITE: service-extension-v2
+      LINKY_EXTENSION_REUSE_BACKEND_RECEIPT: extension-attempt-1
       LINKY_TEST_DATABASE_URL: postgresql://postgres:authored-ci-only@127.0.0.1:5432/linky_extension_checks
       PLAYWRIGHT_BROWSERS_PATH: /tmp/linky-extension-browser-20261105
     steps:

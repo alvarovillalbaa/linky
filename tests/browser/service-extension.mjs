@@ -80,7 +80,24 @@ await withExtensionFixture(async ({ admin, app, results, createWorkspace, create
       await owner.locator('#close-bulk').click();
       stage = 'reload durable CSV records';
       await owner.reload(); await connect(); await owner.locator('[data-view="links"]').click();
-      await owner.locator('#registry-search').fill(title); await owner.locator('#refresh-workspace').click();
+      await owner.locator('#registry-search').fill(title);
+      let releaseRefresh, observedRefresh;
+      const responseGate = new Promise(resolve => { releaseRefresh = resolve; });
+      const refreshObserved = new Promise(resolve => { observedRefresh = resolve; });
+      let holdOneRefresh = true;
+      await owner.route('**/api/v1/links/list', async route => {
+        if (!holdOneRefresh) { await route.continue(); return; }
+        holdOneRefresh = false;
+        const response = await route.fetch(); observedRefresh(); await responseGate;
+        await route.fulfill({ response });
+      });
+      let refreshTimer;
+      try {
+        await owner.locator('#refresh-workspace').click();
+        await Promise.race([refreshObserved, new Promise((_, reject) => { refreshTimer = setTimeout(() => reject(new Error('Refresh request was not observed.')), 10000); })]);
+        const controls = owner.locator('#registry-body button'); assert((await controls.count()) > 0);
+        for (const control of await controls.all()) assert.equal(await control.isDisabled(), true);
+      } finally { clearTimeout(refreshTimer); releaseRefresh(); }
       await owner.getByRole('button', { name: 'Manage ' + title, exact: true }).click();
       stage = 'issue recipient and ingest credentials';
       await owner.locator('#grant-label').fill(`Recipient ${name}`); await owner.locator('#grant-uses').fill('1');
@@ -123,7 +140,7 @@ await withExtensionFixture(async ({ admin, app, results, createWorkspace, create
       const storage = await context.storageState(); assert.deepEqual(storage.cookies, []); assert.deepEqual(storage.origins, []);
       assert.deepEqual(errors, []); assert.deepEqual(unexpected, []); assert.equal(expectedNetworkFailures, loseReply ? 1 : 0);
       results.push({ name, viewport, passed: true, persistedCsvRows: validRows, invalidRowsExcluded: 1, batchSizes: batches.map(x => JSON.parse(x).rows.length), uncertainBatchRecovered: loseReply,
-        exactBodyReused: loseReply ? batches[0] === batches[1] : null, declarationsCommitted: 5, rotatedReplaySameEvent: true, revokedKeyReplayDenied: true, exactUsdMinorTotal: '18014398509481982', exactJpyMinorTotal: '7', noCredentialStorage: true, layout });
+        exactBodyReused: loseReply ? batches[0] === batches[1] : null, refreshControlsDisabled: true, declarationsCommitted: 5, rotatedReplaySameEvent: true, revokedKeyReplayDenied: true, exactUsdMinorTotal: '18014398509481982', exactJpyMinorTotal: '7', noCredentialStorage: true, layout });
     } catch (error) { error.message = `${name} / ${stage}: ${error.message}`; throw error; }
   }
 });

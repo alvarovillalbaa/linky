@@ -103,8 +103,28 @@ try {
     }
     receipt.suite = 'service-extension-v2';
     receipt.carriedForward = { path, sha256: hash(raw), sourceCommit: previous.before.head, stablePaths, passedPureCases: 34, repeatedPureCases: 0 };
-    await run('extension HTTP and affected HTTP regressions', ['--test', '--test-reporter=tap', 'tests/unit/http.test.mjs', 'tests/unit/service-extension-http.test.mjs'], 120000);
-    await run('extension migration and real PostgreSQL checks', ['--test', '--test-reporter=tap', 'tests/integration/service-extension.test.mjs'], 180000);
+    if (process.env.LINKY_EXTENSION_REUSE_BACKEND_RECEIPT === 'extension-attempt-1') {
+      const backendPath = 'docs/results/2026/11-05/extension-attempt-1.json', bytes = await readFile(backendPath), prior = JSON.parse(bytes);
+      assert.equal(hash(bytes), '5b94d3416c29e5e6cc3a297a4ad5db34ae04a3a1f582fa43b8de93c03220755f');
+      assert.equal(prior.before.head, '9e45e566369658858e1c05af439ae926d24aa86b');
+      assert.equal(prior.node, process.version); assert.equal(prior.sourceUnchanged, true); assert.deepEqual(prior.after, prior.before);
+      const stable = prior.before.files.filter(file => !file.path.startsWith('docs/') && !file.path.startsWith('.github/') && !file.path.startsWith('tests/browser/')
+        && !['AGENTS.md', 'README.md', 'scripts/ci-checks.mjs', 'public/src/app.mjs'].includes(file.path));
+      for (const file of stable) assert.deepEqual(before.files.find(row => row.path === file.path), file);
+      for (const [name, count] of [['extension HTTP and affected HTTP regressions',30],['extension migration and real PostgreSQL checks',23]]) {
+        const command = prior.commands.find(row => row.name === name);
+        assert(command.code === 0 && command.closeObserved && command.groupGone && !command.forcedGroupCleanup && !command.timedOut && !command.interrupted);
+        for (const stream of command.streams) {
+          const decoded = inflateSync(Buffer.from(stream.zlibBase64, 'base64')); assert.equal(decoded.length, stream.bytes); assert.equal(hash(decoded), stream.sha256);
+          if (stream.stream === 'stdout') for (const [key, value] of [['tests',count],['pass',count],['fail',0],['cancelled',0],['skipped',0],['todo',0]]) assert(new RegExp(`^# ${key} ${value}$`, 'm').test(decoded.toString('utf8')));
+        }
+      }
+      receipt.backendCarriedForward = { path: backendPath, sha256: hash(bytes), sourceCommit: prior.before.head, stableInputCount: stable.length, acceptedBackendCases: 53, repeatedBackendCases: 0 };
+      await run('prepare fresh extension schema', ['scripts/setup-extension-disposable.mjs'], 60000);
+    } else {
+      await run('extension HTTP and affected HTTP regressions', ['--test', '--test-reporter=tap', 'tests/unit/http.test.mjs', 'tests/unit/service-extension-http.test.mjs'], 120000);
+      await run('extension migration and real PostgreSQL checks', ['--test', '--test-reporter=tap', 'tests/integration/service-extension.test.mjs'], 180000);
+    }
     await run('extension desktop and narrow browser journeys', ['tests/browser/service-extension.mjs'], 180000);
   } else if (process.env.LINKY_REUSE_BACKEND_RECEIPT === 'service-attempt-1') {
     const path = 'docs/results/2026/11-05/service-attempt-1.json';
