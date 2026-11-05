@@ -1,10 +1,12 @@
 # Proposed PostgreSQL contract
 
-Historical design dictionary. Current implemented eight-table/functions contract:
-[database-contract.md](database-contract.md). Dated
+Historical design dictionary. Original eight-table/functions contract:
+[database-contract.md](database-contract.md); the [additive extension](service-extension-database.md)
+implements both conversion tables and six additional runtime functions. Dated
 [disposable acceptance](results/2026/11-05/service-checks.md) and
 [dedicated live-schema receipt](results/2026/11-05/live-schema.md) supersede the
-pending source/Still-reuse status below. Conversion tables remain future scope.
+pending source/Still-reuse status below. Current extension results are linked
+from [extension acceptance](results/2026/11-05/extension-checks.md).
 
 29 October 2026. **Reviewed design proposal, not SQL, an applied schema or an
 accepted security implementation.** The [full product contract](spec.md) remains

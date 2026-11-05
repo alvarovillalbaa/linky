@@ -1,0 +1,153 @@
+{
+  "schemaVersion": 1,
+  "project": "bfteqhtzyzrinzxmgiee",
+  "observedAt": "2026-11-05T10:07:43Z",
+  "source": "supabase/migrations/20261105092311_linky_service_extension.sql",
+  "sourceSHA256": "e8153d0486e7c997d4e85ca18b2b4a2ab9822908125c1cad44c5697b8738a092",
+  "before": {
+    "links": 0,
+    "grants": 0,
+    "receipts": 0,
+    "workspaces": 0,
+    "extensionExists": false
+  },
+  "migrations": [
+    {
+      "version": "20261105084324",
+      "name": "linky_role_bootstrap_20261105"
+    },
+    {
+      "version": "20261105084331",
+      "name": "linky_initial_service_20261105080045"
+    },
+    {
+      "version": "20261105100649",
+      "name": "linky_service_extension_20261105092311"
+    }
+  ],
+  "catalog": {
+    "tables": [
+      {
+        "rls": true,
+        "name": "workspaces",
+        "owner": "linky_function_owner",
+        "runtimeDml": false,
+        "operatorDml": false
+      },
+      {
+        "rls": true,
+        "name": "links",
+        "owner": "linky_function_owner",
+        "runtimeDml": false,
+        "operatorDml": false
+      },
+      {
+        "rls": true,
+        "name": "destination_revisions",
+        "owner": "linky_function_owner",
+        "runtimeDml": false,
+        "operatorDml": false
+      },
+      {
+        "rls": true,
+        "name": "grants",
+        "owner": "linky_function_owner",
+        "runtimeDml": false,
+        "operatorDml": false
+      },
+      {
+        "rls": true,
+        "name": "redemption_receipts",
+        "owner": "linky_function_owner",
+        "runtimeDml": false,
+        "operatorDml": false
+      },
+      {
+        "rls": true,
+        "name": "attribution_events",
+        "owner": "linky_function_owner",
+        "runtimeDml": false,
+        "operatorDml": false
+      },
+      {
+        "rls": true,
+        "name": "mutation_receipts",
+        "owner": "linky_function_owner",
+        "runtimeDml": false,
+        "operatorDml": false
+      },
+      {
+        "rls": true,
+        "name": "audit_events",
+        "owner": "linky_function_owner",
+        "runtimeDml": false,
+        "operatorDml": false
+      },
+      {
+        "rls": true,
+        "name": "conversion_credentials",
+        "owner": "linky_function_owner",
+        "runtimeDml": false,
+        "operatorDml": false
+      },
+      {
+        "rls": true,
+        "name": "conversion_events",
+        "owner": "linky_function_owner",
+        "runtimeDml": false,
+        "operatorDml": false
+      }
+    ],
+    "workspaces": 0,
+    "credentials": 0,
+    "declarations": 0,
+    "loginMemberships": 0,
+    "runtimeFunctions": [
+      "conversion_ingest",
+      "owner_attribution_report",
+      "owner_bulk_create_links",
+      "owner_close",
+      "owner_connect",
+      "owner_create_link",
+      "owner_issue_conversion_credential",
+      "owner_issue_grant",
+      "owner_list_conversion_credentials",
+      "owner_list_grants",
+      "owner_list_links",
+      "owner_report",
+      "owner_revise_link",
+      "owner_revoke_conversion_credential",
+      "owner_revoke_grant",
+      "owner_rotate",
+      "owner_set_link_state",
+      "recipient_inspect",
+      "recipient_redeem"
+    ],
+    "operatorFunctions": [
+      "operator_provision",
+      "operator_recover_owner"
+    ],
+    "publicExecuteCount": 0
+  },
+  "securityAdvisors": [
+    {
+      "name": "rls_enabled_no_policy",
+      "level": "INFO",
+      "count": 10,
+      "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy",
+      "observedAt": "2026-11-05T10:07:40.411Z"
+    }
+  ],
+  "nativeLoginVerified": false,
+  "tlsConnectionVerified": false,
+  "runtimeBound": false,
+  "workspaceProvisioned": false,
+  "liveFixturesCreated": 0,
+  "backendAcceptance": {
+    "cases": 23,
+    "source": "9e45e566369658858e1c05af439ae926d24aa86b",
+    "run": 42005457064,
+    "job": 127170932247
+  },
+  "browserAcceptance": "Separate pending retry; does not gate the already accepted SQL source proof or establish hosted operation."
+}

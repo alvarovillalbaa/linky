@@ -1,9 +1,10 @@
 # Linky
 
-- Current acceptance: docs/results/2026/11-05/service-checks.md (50 unit/HTTP,
-  18 real PG, two browser journeys). Do not repeat closed scopes without changed
-  inputs or a concrete unresolved concern. Preserve failed attempt 1.
-- Dedicated live schema/catalog: docs/results/2026/11-05/live-schema.md. Runtime
+- Current V2 acceptance: docs/results/2026/11-05/extension-checks.md (30 relevant
+  HTTP, 23 real PG, two browser journeys; pure34 carried). Earlier V1 receipts
+  stay historical. Do not repeat closed scopes without changed inputs or a
+  concrete concern; preserve both failed extension attempts.
+- Dedicated live schema/catalog: docs/results/2026/11-05/extension-live-schema.md. Runtime
   pooler/TLS/credentials, workspace and hosted acceptance remain unbound.
 
 - The full four-part brief is preserved in docs/spec.md: link management,
@@ -25,7 +26,9 @@
 - Owner, recipient and conversion-ingest capabilities must have separate
   purposes. No secret enters
   a committed fixture, public record, query string, log or analytics event.
-- GET/HEAD must never consume a use. Proposed redemption/revocation serialize
+- Both generated migrations are immutable after acceptance/application. Add new
+  versions; do not rewrite the V1/V2 SQL or historical raw receipts.
+- GET/HEAD must never consume a use. Redemption/revocation serialize
   under database locks, use database wall time after locking, and commit a
   stable idempotent receipt before returning a destination. No memory counter.
 - Redirect gating cannot revoke access to a destination already learned.

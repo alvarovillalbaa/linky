@@ -13,6 +13,10 @@ and independently bounded cohorts separate. See the
 [extension HTTP](docs/service-extension-http.md),
 [database](docs/service-extension-database.md) and [UI](docs/service-extension-ui.md)
 contracts; dated results distinguish source, disposable checks and live binding.
+The [extension's 55 focused cases](docs/results/2026/11-05/extension-checks.md)
+passed, with 34 unchanged helper cases carried forward. Its
+[additive schema is applied](docs/results/2026/11-05/extension-live-schema.md);
+runtime credentials and hosted acceptance remain unbound.
 
 The source includes a PostgreSQL-backed owner workspace and recipient flow:
 create/revise destinations, issue finite expiring grants, inspect the hostname,
@@ -34,9 +38,9 @@ Never deploy the operator connection or a project-wide service key.
 Read the [full brief](docs/spec.md), [HTTP contract](docs/http-contract.md),
 [database contract](docs/database-contract.md), [architecture](docs/architecture.md)
 and [acceptance scope](docs/proposals/persistent-service-checks.md).
-The [70 accepted cases](docs/results/2026/11-05/service-checks.md) cover disposable
+The earlier [70 V1 cases](docs/results/2026/11-05/service-checks.md) cover disposable
 unit/HTTP, PostgreSQL and desktop/narrow browser environments. The
-[dedicated schema is applied](docs/results/2026/11-05/live-schema.md); this is
+[original schema is applied](docs/results/2026/11-05/live-schema.md); this is
 separate from the still-pending verified live connection and hosted acceptance.
 The [generator receipt](docs/results/2026/11-05/source-prerequisites.md) records
 the exact pg lock and CLI-generated migration scaffold.

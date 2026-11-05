@@ -37,7 +37,7 @@ No secret or credential digest belongs in an ordinary response, query, log or
 analytics record. Responses use `Cache-Control: no-store` and no-referrer.
 
 `GET`/`HEAD /api/v1/status` is public, never queries PostgreSQL and returns:
-`{service:'linky',configuration:'required'|'present',database:'unverified',conversionsAvailable:false}`.
+`{service:'linky',configuration:'required'|'present',database:'unverified',conversionsAvailable:true}`.
 Configuration presence is not a health check. Other API GET/HEAD requests do
 not disclose records or redeem anything. `/r/<grant UUID>` loads the inert
 recipient shell. The UI holds its fragment credential only in memory and

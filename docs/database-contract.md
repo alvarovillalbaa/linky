@@ -1,5 +1,10 @@
 # Linky durable database boundary
 
+Version-one contract retained for its original eight tables/thirteen runtime
+functions. The [additive extension](service-extension-database.md) owns current
+bulk/conversion functions and two more tables. Its
+[dated results](results/2026/11-05/extension-checks.md) distinguish execution and live binding.
+
 5 November 2026. Authored implementation and disposable fixtures; no local or
 live application is claimed by this document. The standing scope is recorded in
 [AGENTS](../AGENTS.md) and the [focused check proposal](proposals/persistent-service-checks.md).
