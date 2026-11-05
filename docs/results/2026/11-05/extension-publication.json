@@ -1,0 +1,830 @@
+{
+  "schemaVersion": 1,
+  "scope": "Linky V2 anonymous unconfigured public publication preflight",
+  "startedAt": "2026-11-05 10:38:17 UTC",
+  "finishedAt": "2026-11-05 10:38:54 UTC",
+  "origin": "https://linky-alvaro.vercel.app",
+  "sourceCommit": "9a7ef93e4885c8a7949086695ccb6e6376375ac9",
+  "deploymentId": "dpl_ByXHUQjkTzPtHuVEc7Mu2PpBjD8b",
+  "deploymentStateObserved": "READY",
+  "deploymentSourceObservedAt": "2026-11-05T10:36:00Z",
+  "requestCount": 30,
+  "acceptedCount": 30,
+  "preparationFailure": {
+    "phase": "Python child-curl capture",
+    "result": "No body captures; only30emptyheader files. Inventory assertion failed before any acceptance receipt.",
+    "scratchFilesRemoved": 30,
+    "scratchBytesRemoved": 0,
+    "scratchRemoved": true
+  },
+  "results": [
+    {
+      "path": "/api/v1/status",
+      "method": "GET",
+      "status": 200,
+      "expectedStatus": 200,
+      "curlExit": 0,
+      "captureBytes": 98,
+      "captureSHA256": "39f63d6b0c41564a16c51ca8e586d20614f05b7c8b01ae982f1c98ca636ed34e",
+      "securityHeaders": {
+        "cache-control": "no-store",
+        "referrer-policy": "no-referrer",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY"
+      },
+      "response": {
+        "service": "linky",
+        "configuration": "required",
+        "database": "unverified",
+        "conversionsAvailable": true
+      },
+      "checks": {
+        "transport": true,
+        "status": true,
+        "securityHeaders": true,
+        "unconfiguredFeatureStatus": true
+      },
+      "accepted": true
+    },
+    {
+      "path": "/api/v1/owner/connect",
+      "method": "GET",
+      "status": 405,
+      "expectedStatus": 405,
+      "curlExit": 0,
+      "captureBytes": 39,
+      "captureSHA256": "24522f41d219130511f61392ce811d7fb2f2feeb439c9ef9717146dc6d5d3263",
+      "securityHeaders": {
+        "cache-control": "no-store",
+        "referrer-policy": "no-referrer",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY"
+      },
+      "response": {
+        "error": {
+          "code": "method_not_allowed"
+        }
+      },
+      "checks": {
+        "transport": true,
+        "status": true,
+        "securityHeaders": true,
+        "errorCode": true
+      },
+      "accepted": true
+    },
+    {
+      "path": "/api/v1/owner/rotate",
+      "method": "GET",
+      "status": 405,
+      "expectedStatus": 405,
+      "curlExit": 0,
+      "captureBytes": 39,
+      "captureSHA256": "24522f41d219130511f61392ce811d7fb2f2feeb439c9ef9717146dc6d5d3263",
+      "securityHeaders": {
+        "cache-control": "no-store",
+        "referrer-policy": "no-referrer",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY"
+      },
+      "response": {
+        "error": {
+          "code": "method_not_allowed"
+        }
+      },
+      "checks": {
+        "transport": true,
+        "status": true,
+        "securityHeaders": true,
+        "errorCode": true
+      },
+      "accepted": true
+    },
+    {
+      "path": "/api/v1/owner/close",
+      "method": "GET",
+      "status": 405,
+      "expectedStatus": 405,
+      "curlExit": 0,
+      "captureBytes": 39,
+      "captureSHA256": "24522f41d219130511f61392ce811d7fb2f2feeb439c9ef9717146dc6d5d3263",
+      "securityHeaders": {
+        "cache-control": "no-store",
+        "referrer-policy": "no-referrer",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY"
+      },
+      "response": {
+        "error": {
+          "code": "method_not_allowed"
+        }
+      },
+      "checks": {
+        "transport": true,
+        "status": true,
+        "securityHeaders": true,
+        "errorCode": true
+      },
+      "accepted": true
+    },
+    {
+      "path": "/api/v1/links/list",
+      "method": "GET",
+      "status": 405,
+      "expectedStatus": 405,
+      "curlExit": 0,
+      "captureBytes": 39,
+      "captureSHA256": "24522f41d219130511f61392ce811d7fb2f2feeb439c9ef9717146dc6d5d3263",
+      "securityHeaders": {
+        "cache-control": "no-store",
+        "referrer-policy": "no-referrer",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY"
+      },
+      "response": {
+        "error": {
+          "code": "method_not_allowed"
+        }
+      },
+      "checks": {
+        "transport": true,
+        "status": true,
+        "securityHeaders": true,
+        "errorCode": true
+      },
+      "accepted": true
+    },
+    {
+      "path": "/api/v1/links/create",
+      "method": "GET",
+      "status": 405,
+      "expectedStatus": 405,
+      "curlExit": 0,
+      "captureBytes": 39,
+      "captureSHA256": "24522f41d219130511f61392ce811d7fb2f2feeb439c9ef9717146dc6d5d3263",
+      "securityHeaders": {
+        "cache-control": "no-store",
+        "referrer-policy": "no-referrer",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY"
+      },
+      "response": {
+        "error": {
+          "code": "method_not_allowed"
+        }
+      },
+      "checks": {
+        "transport": true,
+        "status": true,
+        "securityHeaders": true,
+        "errorCode": true
+      },
+      "accepted": true
+    },
+    {
+      "path": "/api/v1/links/revise",
+      "method": "GET",
+      "status": 405,
+      "expectedStatus": 405,
+      "curlExit": 0,
+      "captureBytes": 39,
+      "captureSHA256": "24522f41d219130511f61392ce811d7fb2f2feeb439c9ef9717146dc6d5d3263",
+      "securityHeaders": {
+        "cache-control": "no-store",
+        "referrer-policy": "no-referrer",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY"
+      },
+      "response": {
+        "error": {
+          "code": "method_not_allowed"
+        }
+      },
+      "checks": {
+        "transport": true,
+        "status": true,
+        "securityHeaders": true,
+        "errorCode": true
+      },
+      "accepted": true
+    },
+    {
+      "path": "/api/v1/links/state",
+      "method": "GET",
+      "status": 405,
+      "expectedStatus": 405,
+      "curlExit": 0,
+      "captureBytes": 39,
+      "captureSHA256": "24522f41d219130511f61392ce811d7fb2f2feeb439c9ef9717146dc6d5d3263",
+      "securityHeaders": {
+        "cache-control": "no-store",
+        "referrer-policy": "no-referrer",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY"
+      },
+      "response": {
+        "error": {
+          "code": "method_not_allowed"
+        }
+      },
+      "checks": {
+        "transport": true,
+        "status": true,
+        "securityHeaders": true,
+        "errorCode": true
+      },
+      "accepted": true
+    },
+    {
+      "path": "/api/v1/grants/issue",
+      "method": "GET",
+      "status": 405,
+      "expectedStatus": 405,
+      "curlExit": 0,
+      "captureBytes": 39,
+      "captureSHA256": "24522f41d219130511f61392ce811d7fb2f2feeb439c9ef9717146dc6d5d3263",
+      "securityHeaders": {
+        "cache-control": "no-store",
+        "referrer-policy": "no-referrer",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY"
+      },
+      "response": {
+        "error": {
+          "code": "method_not_allowed"
+        }
+      },
+      "checks": {
+        "transport": true,
+        "status": true,
+        "securityHeaders": true,
+        "errorCode": true
+      },
+      "accepted": true
+    },
+    {
+      "path": "/api/v1/grants/list",
+      "method": "GET",
+      "status": 405,
+      "expectedStatus": 405,
+      "curlExit": 0,
+      "captureBytes": 39,
+      "captureSHA256": "24522f41d219130511f61392ce811d7fb2f2feeb439c9ef9717146dc6d5d3263",
+      "securityHeaders": {
+        "cache-control": "no-store",
+        "referrer-policy": "no-referrer",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY"
+      },
+      "response": {
+        "error": {
+          "code": "method_not_allowed"
+        }
+      },
+      "checks": {
+        "transport": true,
+        "status": true,
+        "securityHeaders": true,
+        "errorCode": true
+      },
+      "accepted": true
+    },
+    {
+      "path": "/api/v1/grants/revoke",
+      "method": "GET",
+      "status": 405,
+      "expectedStatus": 405,
+      "curlExit": 0,
+      "captureBytes": 39,
+      "captureSHA256": "24522f41d219130511f61392ce811d7fb2f2feeb439c9ef9717146dc6d5d3263",
+      "securityHeaders": {
+        "cache-control": "no-store",
+        "referrer-policy": "no-referrer",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY"
+      },
+      "response": {
+        "error": {
+          "code": "method_not_allowed"
+        }
+      },
+      "checks": {
+        "transport": true,
+        "status": true,
+        "securityHeaders": true,
+        "errorCode": true
+      },
+      "accepted": true
+    },
+    {
+      "path": "/api/v1/recipient/inspect",
+      "method": "GET",
+      "status": 405,
+      "expectedStatus": 405,
+      "curlExit": 0,
+      "captureBytes": 39,
+      "captureSHA256": "24522f41d219130511f61392ce811d7fb2f2feeb439c9ef9717146dc6d5d3263",
+      "securityHeaders": {
+        "cache-control": "no-store",
+        "referrer-policy": "no-referrer",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY"
+      },
+      "response": {
+        "error": {
+          "code": "method_not_allowed"
+        }
+      },
+      "checks": {
+        "transport": true,
+        "status": true,
+        "securityHeaders": true,
+        "errorCode": true
+      },
+      "accepted": true
+    },
+    {
+      "path": "/api/v1/recipient/redeem",
+      "method": "GET",
+      "status": 405,
+      "expectedStatus": 405,
+      "curlExit": 0,
+      "captureBytes": 39,
+      "captureSHA256": "24522f41d219130511f61392ce811d7fb2f2feeb439c9ef9717146dc6d5d3263",
+      "securityHeaders": {
+        "cache-control": "no-store",
+        "referrer-policy": "no-referrer",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY"
+      },
+      "response": {
+        "error": {
+          "code": "method_not_allowed"
+        }
+      },
+      "checks": {
+        "transport": true,
+        "status": true,
+        "securityHeaders": true,
+        "errorCode": true
+      },
+      "accepted": true
+    },
+    {
+      "path": "/api/v1/reports/redemptions",
+      "method": "GET",
+      "status": 405,
+      "expectedStatus": 405,
+      "curlExit": 0,
+      "captureBytes": 39,
+      "captureSHA256": "24522f41d219130511f61392ce811d7fb2f2feeb439c9ef9717146dc6d5d3263",
+      "securityHeaders": {
+        "cache-control": "no-store",
+        "referrer-policy": "no-referrer",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY"
+      },
+      "response": {
+        "error": {
+          "code": "method_not_allowed"
+        }
+      },
+      "checks": {
+        "transport": true,
+        "status": true,
+        "securityHeaders": true,
+        "errorCode": true
+      },
+      "accepted": true
+    },
+    {
+      "path": "/api/v1/links/bulk-create",
+      "method": "GET",
+      "status": 405,
+      "expectedStatus": 405,
+      "curlExit": 0,
+      "captureBytes": 39,
+      "captureSHA256": "24522f41d219130511f61392ce811d7fb2f2feeb439c9ef9717146dc6d5d3263",
+      "securityHeaders": {
+        "cache-control": "no-store",
+        "referrer-policy": "no-referrer",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY"
+      },
+      "response": {
+        "error": {
+          "code": "method_not_allowed"
+        }
+      },
+      "checks": {
+        "transport": true,
+        "status": true,
+        "securityHeaders": true,
+        "errorCode": true
+      },
+      "accepted": true
+    },
+    {
+      "path": "/api/v1/conversion-credentials/issue",
+      "method": "GET",
+      "status": 405,
+      "expectedStatus": 405,
+      "curlExit": 0,
+      "captureBytes": 39,
+      "captureSHA256": "24522f41d219130511f61392ce811d7fb2f2feeb439c9ef9717146dc6d5d3263",
+      "securityHeaders": {
+        "cache-control": "no-store",
+        "referrer-policy": "no-referrer",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY"
+      },
+      "response": {
+        "error": {
+          "code": "method_not_allowed"
+        }
+      },
+      "checks": {
+        "transport": true,
+        "status": true,
+        "securityHeaders": true,
+        "errorCode": true
+      },
+      "accepted": true
+    },
+    {
+      "path": "/api/v1/conversion-credentials/list",
+      "method": "GET",
+      "status": 405,
+      "expectedStatus": 405,
+      "curlExit": 0,
+      "captureBytes": 39,
+      "captureSHA256": "24522f41d219130511f61392ce811d7fb2f2feeb439c9ef9717146dc6d5d3263",
+      "securityHeaders": {
+        "cache-control": "no-store",
+        "referrer-policy": "no-referrer",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY"
+      },
+      "response": {
+        "error": {
+          "code": "method_not_allowed"
+        }
+      },
+      "checks": {
+        "transport": true,
+        "status": true,
+        "securityHeaders": true,
+        "errorCode": true
+      },
+      "accepted": true
+    },
+    {
+      "path": "/api/v1/conversion-credentials/revoke",
+      "method": "GET",
+      "status": 405,
+      "expectedStatus": 405,
+      "curlExit": 0,
+      "captureBytes": 39,
+      "captureSHA256": "24522f41d219130511f61392ce811d7fb2f2feeb439c9ef9717146dc6d5d3263",
+      "securityHeaders": {
+        "cache-control": "no-store",
+        "referrer-policy": "no-referrer",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY"
+      },
+      "response": {
+        "error": {
+          "code": "method_not_allowed"
+        }
+      },
+      "checks": {
+        "transport": true,
+        "status": true,
+        "securityHeaders": true,
+        "errorCode": true
+      },
+      "accepted": true
+    },
+    {
+      "path": "/api/v1/conversions/ingest",
+      "method": "GET",
+      "status": 405,
+      "expectedStatus": 405,
+      "curlExit": 0,
+      "captureBytes": 39,
+      "captureSHA256": "24522f41d219130511f61392ce811d7fb2f2feeb439c9ef9717146dc6d5d3263",
+      "securityHeaders": {
+        "cache-control": "no-store",
+        "referrer-policy": "no-referrer",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY"
+      },
+      "response": {
+        "error": {
+          "code": "method_not_allowed"
+        }
+      },
+      "checks": {
+        "transport": true,
+        "status": true,
+        "securityHeaders": true,
+        "errorCode": true
+      },
+      "accepted": true
+    },
+    {
+      "path": "/api/v1/reports/attribution",
+      "method": "GET",
+      "status": 405,
+      "expectedStatus": 405,
+      "curlExit": 0,
+      "captureBytes": 39,
+      "captureSHA256": "24522f41d219130511f61392ce811d7fb2f2feeb439c9ef9717146dc6d5d3263",
+      "securityHeaders": {
+        "cache-control": "no-store",
+        "referrer-policy": "no-referrer",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY"
+      },
+      "response": {
+        "error": {
+          "code": "method_not_allowed"
+        }
+      },
+      "checks": {
+        "transport": true,
+        "status": true,
+        "securityHeaders": true,
+        "errorCode": true
+      },
+      "accepted": true
+    },
+    {
+      "path": "/api/v1/status",
+      "method": "HEAD",
+      "status": 200,
+      "expectedStatus": 200,
+      "curlExit": 0,
+      "captureBytes": 486,
+      "captureSHA256": "244b4462fb4b7aa9f7d9df5bd9efbff8f9b05c6dabbaeb039d586ce7f4db5136",
+      "securityHeaders": {
+        "cache-control": "no-store",
+        "referrer-policy": "no-referrer",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY"
+      },
+      "captureKind": "curl header-only capture; not a response body",
+      "checks": {
+        "transport": true,
+        "status": true,
+        "securityHeaders": true
+      },
+      "accepted": true
+    },
+    {
+      "path": "/api/v1/owner/connect",
+      "method": "POST",
+      "status": 503,
+      "expectedStatus": 503,
+      "curlExit": 0,
+      "captureBytes": 41,
+      "captureSHA256": "fb47bc92087c2f02c1955ca70557c20998aa21c4a58d32fdcd00650b886aa3a3",
+      "securityHeaders": {
+        "cache-control": "no-store",
+        "referrer-policy": "no-referrer",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY"
+      },
+      "response": {
+        "error": {
+          "code": "backend_unconfigured"
+        }
+      },
+      "checks": {
+        "transport": true,
+        "status": true,
+        "securityHeaders": true,
+        "errorCode": true
+      },
+      "accepted": true
+    },
+    {
+      "path": "/api/v1/conversions/ingest",
+      "method": "POST",
+      "status": 503,
+      "expectedStatus": 503,
+      "curlExit": 0,
+      "captureBytes": 41,
+      "captureSHA256": "fb47bc92087c2f02c1955ca70557c20998aa21c4a58d32fdcd00650b886aa3a3",
+      "securityHeaders": {
+        "cache-control": "no-store",
+        "referrer-policy": "no-referrer",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY"
+      },
+      "response": {
+        "error": {
+          "code": "backend_unconfigured"
+        }
+      },
+      "checks": {
+        "transport": true,
+        "status": true,
+        "securityHeaders": true,
+        "errorCode": true
+      },
+      "accepted": true
+    },
+    {
+      "path": "/api/v1/status?unexpected=value",
+      "method": "GET",
+      "status": 400,
+      "expectedStatus": 400,
+      "curlExit": 0,
+      "captureBytes": 36,
+      "captureSHA256": "9709956ad4554d08d61fdbaa3a14997a02251ff75264facea02cac2d6b60bf7a",
+      "securityHeaders": {
+        "cache-control": "no-store",
+        "referrer-policy": "no-referrer",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY"
+      },
+      "response": {
+        "error": {
+          "code": "invalid_request"
+        }
+      },
+      "checks": {
+        "transport": true,
+        "status": true,
+        "securityHeaders": true,
+        "errorCode": true
+      },
+      "accepted": true
+    },
+    {
+      "path": "/api/v1/unknown",
+      "method": "GET",
+      "status": 400,
+      "expectedStatus": 400,
+      "curlExit": 0,
+      "captureBytes": 36,
+      "captureSHA256": "9709956ad4554d08d61fdbaa3a14997a02251ff75264facea02cac2d6b60bf7a",
+      "securityHeaders": {
+        "cache-control": "no-store",
+        "referrer-policy": "no-referrer",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY"
+      },
+      "response": {
+        "error": {
+          "code": "invalid_request"
+        }
+      },
+      "checks": {
+        "transport": true,
+        "status": true,
+        "securityHeaders": true,
+        "errorCode": true
+      },
+      "accepted": true
+    },
+    {
+      "path": "/",
+      "method": "GET",
+      "status": 200,
+      "expectedStatus": 200,
+      "curlExit": 0,
+      "captureBytes": 19952,
+      "captureSHA256": "bb9effe3e5fa3932381c18b8abf5c718ffac91cfadcb936c06121095370e96fb",
+      "securityHeaders": {
+        "cache-control": "no-store",
+        "referrer-policy": "no-referrer",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY"
+      },
+      "source": "public/index.html",
+      "sourceBytes": 19952,
+      "sourceSHA256": "bb9effe3e5fa3932381c18b8abf5c718ffac91cfadcb936c06121095370e96fb",
+      "checks": {
+        "transport": true,
+        "status": true,
+        "securityHeaders": true,
+        "sourceByteMatch": true
+      },
+      "accepted": true
+    },
+    {
+      "path": "/r/11111111-1111-4111-8111-111111111111",
+      "method": "GET",
+      "status": 200,
+      "expectedStatus": 200,
+      "curlExit": 0,
+      "captureBytes": 19952,
+      "captureSHA256": "bb9effe3e5fa3932381c18b8abf5c718ffac91cfadcb936c06121095370e96fb",
+      "securityHeaders": {
+        "cache-control": "no-store",
+        "referrer-policy": "no-referrer",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY"
+      },
+      "source": "public/index.html",
+      "sourceBytes": 19952,
+      "sourceSHA256": "bb9effe3e5fa3932381c18b8abf5c718ffac91cfadcb936c06121095370e96fb",
+      "checks": {
+        "transport": true,
+        "status": true,
+        "securityHeaders": true,
+        "sourceByteMatch": true
+      },
+      "accepted": true
+    },
+    {
+      "path": "/src/app.mjs",
+      "method": "GET",
+      "status": 200,
+      "expectedStatus": 200,
+      "curlExit": 0,
+      "captureBytes": 76793,
+      "captureSHA256": "22592dbbbc4f25c3dc47635a343522e26209cad46989e7c055e006ce64f9c431",
+      "securityHeaders": {
+        "cache-control": "no-store",
+        "referrer-policy": "no-referrer",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY"
+      },
+      "source": "public/src/app.mjs",
+      "sourceBytes": 76793,
+      "sourceSHA256": "22592dbbbc4f25c3dc47635a343522e26209cad46989e7c055e006ce64f9c431",
+      "checks": {
+        "transport": true,
+        "status": true,
+        "securityHeaders": true,
+        "sourceByteMatch": true
+      },
+      "accepted": true
+    },
+    {
+      "path": "/src/server-client.mjs",
+      "method": "GET",
+      "status": 200,
+      "expectedStatus": 200,
+      "curlExit": 0,
+      "captureBytes": 3357,
+      "captureSHA256": "b57e2fdbcfaa32bb65f2b5ae4d13b20064b07bde1b17779c04c50c7ebb93cf44",
+      "securityHeaders": {
+        "cache-control": "no-store",
+        "referrer-policy": "no-referrer",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY"
+      },
+      "source": "public/src/server-client.mjs",
+      "sourceBytes": 3357,
+      "sourceSHA256": "b57e2fdbcfaa32bb65f2b5ae4d13b20064b07bde1b17779c04c50c7ebb93cf44",
+      "checks": {
+        "transport": true,
+        "status": true,
+        "securityHeaders": true,
+        "sourceByteMatch": true
+      },
+      "accepted": true
+    },
+    {
+      "path": "/styles.css",
+      "method": "GET",
+      "status": 200,
+      "expectedStatus": 200,
+      "curlExit": 0,
+      "captureBytes": 30014,
+      "captureSHA256": "5a8aa6a2b8979d56ef56b91c6e25f0d0553a1e2a69b601d2e819f5a1a50ac1ac",
+      "securityHeaders": {
+        "cache-control": "no-store",
+        "referrer-policy": "no-referrer",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY"
+      },
+      "source": "public/styles.css",
+      "sourceBytes": 30014,
+      "sourceSHA256": "5a8aa6a2b8979d56ef56b91c6e25f0d0553a1e2a69b601d2e819f5a1a50ac1ac",
+      "checks": {
+        "transport": true,
+        "status": true,
+        "securityHeaders": true,
+        "sourceByteMatch": true
+      },
+      "accepted": true
+    }
+  ],
+  "cleanup": {
+    "ownerTypeInodeInventoryVerified": true,
+    "filesRemoved": 60,
+    "bytesRemoved": 167607,
+    "scratchRemoved": true
+  },
+  "limits": [
+    "Anonymous routing/assets/configuration observations only.",
+    "No private key, live workspace, fixture, or database action.",
+    "No restricted pooler/TLS or hosted owner/recipient/integration acceptance.",
+    "A later documentation-only head is not a rerun of this HTTP edition."
+  ]
+}

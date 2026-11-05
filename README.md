@@ -1,7 +1,7 @@
 # Linky
 
 [Open the unconfigured review](https://linky-alvaro.vercel.app) ·
-[Publication and proof limits](docs/results/2026/11-05/publication.md).
+[Publication and proof limits](docs/results/2026/11-05/extension-publication.md).
 
 Manage destinations, make recipient access deliberate, and count committed
 redemptions without claiming they are people, visits or sales.
