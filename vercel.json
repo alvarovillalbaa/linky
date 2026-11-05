@@ -2,7 +2,7 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "outputDirectory": "public",
   "rewrites": [
-    { "source": "/api/v1/:path*", "destination": "/api/v1?linky_route=:path*" },
+    { "source": "/api/v1/:linky_route*", "destination": "/api/v1" },
     { "source": "/r/:grantId", "destination": "/index.html" }
   ],
   "headers": [
