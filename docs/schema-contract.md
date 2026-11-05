@@ -1,5 +1,11 @@
 # Proposed PostgreSQL contract
 
+Historical design dictionary. Current implemented eight-table/functions contract:
+[database-contract.md](database-contract.md). Dated
+[disposable acceptance](results/2026/11-05/service-checks.md) and
+[dedicated live-schema receipt](results/2026/11-05/live-schema.md) supersede the
+pending source/Still-reuse status below. Conversion tables remain future scope.
+
 29 October 2026. **Reviewed design proposal, not SQL, an applied schema or an
 accepted security implementation.** The [full product contract](spec.md) remains
 binding. The [first approval request](proposals/persistent-service.md) covers

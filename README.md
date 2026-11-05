@@ -23,6 +23,10 @@ Never deploy the operator connection or a project-wide service key.
 Read the [full brief](docs/spec.md), [HTTP contract](docs/http-contract.md),
 [database contract](docs/database-contract.md), [architecture](docs/architecture.md)
 and [acceptance scope](docs/proposals/persistent-service-checks.md).
+The [70 accepted cases](docs/results/2026/11-05/service-checks.md) cover disposable
+unit/HTTP, PostgreSQL and desktop/narrow browser environments. The
+[dedicated schema is applied](docs/results/2026/11-05/live-schema.md); this is
+separate from the still-pending verified live connection and hosted acceptance.
 The [generator receipt](docs/results/2026/11-05/source-prerequisites.md) records
 the exact pg lock and CLI-generated migration scaffold.
 

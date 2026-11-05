@@ -1,5 +1,11 @@
 # Linky
 
+- Current acceptance: docs/results/2026/11-05/service-checks.md (50 unit/HTTP,
+  18 real PG, two browser journeys). Do not repeat closed scopes without changed
+  inputs or a concrete unresolved concern. Preserve failed attempt 1.
+- Dedicated live schema/catalog: docs/results/2026/11-05/live-schema.md. Runtime
+  pooler/TLS/credentials, workspace and hosted acceptance remain unbound.
+
 - The full four-part brief is preserved in docs/spec.md: link management,
   access controls via links at scale, marketing/sales attribution and link safety.
   A local editor alone does not satisfy that product.

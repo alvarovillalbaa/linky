@@ -1,0 +1,164 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-11-05T08:44:30Z",
+  "project": {
+    "id": "bfteqhtzyzrinzxmgiee",
+    "organization": "jnmtatndgpzawemtiukl",
+    "region": "eu-central-1",
+    "quotedMonthlyCost": 0
+  },
+  "before": {
+    "installer": "postgres",
+    "postgresVersion": "170011",
+    "publicOrdinaryTables": 0,
+    "linkySchemaExists": false,
+    "linkyRoles": []
+  },
+  "migrations": [
+    {
+      "version": "20261105084324",
+      "name": "linky_role_bootstrap_20261105",
+      "source": "db/bootstrap.sql",
+      "sha256": "44582e7f3aabc8b118d38c8d4b9309ea1f1661554e735b4bca8dda1dda044d14"
+    },
+    {
+      "version": "20261105084331",
+      "name": "linky_initial_service_20261105080045",
+      "source": "supabase/migrations/20261105080045_linky_initial_service.sql",
+      "sha256": "406957876504aeb4c99a42f6488f24c325aaf9c2e41b8dc501f5c227b08249be"
+    }
+  ],
+  "catalog": {
+    "roles": [
+      {
+        "name": "linky_function_owner",
+        "login": false,
+        "super": false,
+        "createDb": false,
+        "createRole": false,
+        "inherit": false,
+        "replication": false,
+        "bypassRls": false
+      },
+      {
+        "name": "linky_runtime",
+        "login": true,
+        "super": false,
+        "createDb": false,
+        "createRole": false,
+        "inherit": false,
+        "replication": false,
+        "bypassRls": false
+      },
+      {
+        "name": "linky_operator",
+        "login": true,
+        "super": false,
+        "createDb": false,
+        "createRole": false,
+        "inherit": false,
+        "replication": false,
+        "bypassRls": false
+      }
+    ],
+    "tables": [
+      {
+        "name": "workspaces",
+        "rls": true,
+        "owner": "linky_function_owner",
+        "runtimeDml": false,
+        "operatorDml": false
+      },
+      {
+        "name": "links",
+        "rls": true,
+        "owner": "linky_function_owner",
+        "runtimeDml": false,
+        "operatorDml": false
+      },
+      {
+        "name": "destination_revisions",
+        "rls": true,
+        "owner": "linky_function_owner",
+        "runtimeDml": false,
+        "operatorDml": false
+      },
+      {
+        "name": "grants",
+        "rls": true,
+        "owner": "linky_function_owner",
+        "runtimeDml": false,
+        "operatorDml": false
+      },
+      {
+        "name": "redemption_receipts",
+        "rls": true,
+        "owner": "linky_function_owner",
+        "runtimeDml": false,
+        "operatorDml": false
+      },
+      {
+        "name": "attribution_events",
+        "rls": true,
+        "owner": "linky_function_owner",
+        "runtimeDml": false,
+        "operatorDml": false
+      },
+      {
+        "name": "mutation_receipts",
+        "rls": true,
+        "owner": "linky_function_owner",
+        "runtimeDml": false,
+        "operatorDml": false
+      },
+      {
+        "name": "audit_events",
+        "rls": true,
+        "owner": "linky_function_owner",
+        "runtimeDml": false,
+        "operatorDml": false
+      }
+    ],
+    "loginMemberships": 0,
+    "runtimeFunctions": [
+      "owner_close",
+      "owner_connect",
+      "owner_create_link",
+      "owner_issue_grant",
+      "owner_list_grants",
+      "owner_list_links",
+      "owner_report",
+      "owner_revise_link",
+      "owner_revoke_grant",
+      "owner_rotate",
+      "owner_set_link_state",
+      "recipient_inspect",
+      "recipient_redeem"
+    ],
+    "operatorFunctions": [
+      "operator_provision",
+      "operator_recover_owner"
+    ],
+    "publicExecuteCount": 0,
+    "runtimeOtherPrivateTableAccess": 0
+  },
+  "securityAdvisors": {
+    "errors": 0,
+    "warnings": 0,
+    "info": [
+      {
+        "name": "rls_enabled_no_policy",
+        "count": 8,
+        "observedAt": "2026-11-05T08:44:28.213Z",
+        "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy",
+        "reason": "Intentional private-function API; no direct table policies or grants. Non-login table owner bypass is documented."
+      }
+    ]
+  },
+  "liveRuntimeBound": false,
+  "workspaceProvisioned": false,
+  "passwordsProvisioned": false,
+  "poolerAddressVerified": false,
+  "connectionTlsVerified": false,
+  "liveProductChecksExecuted": 0
+}
