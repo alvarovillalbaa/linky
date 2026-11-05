@@ -19,8 +19,8 @@
   application binding. Never reuse Still/Kickoff Auth or credentials. No paid
   plan, enrollment, unrelated project change or unsafe fallback is authorized.
 - Never share other apps' Auth users, private data or privileged project keys.
-  The proposed isolated database role/schema still shares infrastructure/quota;
-  it is not a dedicated Supabase project. Unexpected inherited private access
+  Roles/schema belong to dedicated Linky project bfteqhtzyzrinzxmgiee; the
+  Still-reuse proposal is historical. Unexpected inherited private access
   blocks rollout; do not alter other apps' permissions to make a check pass.
 - Owner, recipient and conversion-ingest capabilities must have separate
   purposes. No secret enters

@@ -123,7 +123,8 @@ await withExtensionFixture(async ({ admin, app, results, createWorkspace, create
       const second = await issueCredential(`Integration second ${name}`);
       await owner.getByRole('button', { name: `Revoke conversion Integration first ${name}`, exact: true }).click();
       await owner.getByRole('button', { name: 'Revoke conversion credential', exact: true }).click();
-      await eventually(async () => assert.match(await owner.locator('#conversion-credentials').textContent(), /revoked/u));
+      await owner.getByRole('button', { name: `Revoke conversion Integration first ${name}`, exact: true }).waitFor({ state: 'detached' });
+      assert.equal((await admin.query('SELECT revoked_at IS NOT NULL AS revoked FROM linky_private.conversion_credentials WHERE id=$1 AND workspace_id=$2', [first.id, workspace.workspaceId])).rows[0].revoked, true);
       await declare(first, usd, 410);
       const rotated = await declare(second, usd); assert.equal(rotated.eventId, originalSale.eventId); assert.equal(rotated.replayed, true);
       await declare(second, { ...usd, eventKey: randomUUID() });

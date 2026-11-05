@@ -6,6 +6,14 @@
 Manage destinations, make recipient access deliberate, and count committed
 redemptions without claiming they are people, visits or sales.
 
+Reviewed CSV rows can be saved in bounded batches with explicit per-row outcomes
+and recoverable identities. Separate write-only conversion keys accept declared
+leads/sales against committed receipts. Reports keep currencies, unknown values
+and independently bounded cohorts separate. See the
+[extension HTTP](docs/service-extension-http.md),
+[database](docs/service-extension-database.md) and [UI](docs/service-extension-ui.md)
+contracts; dated results distinguish source, disposable checks and live binding.
+
 The source includes a PostgreSQL-backed owner workspace and recipient flow:
 create/revise destinations, issue finite expiring grants, inspect the hostname,
 explicitly redeem, recover a committed receipt after an uncertain reply, and
@@ -47,10 +55,12 @@ login, verified TLS, one pooled connection and unnamed parameterized queries.
 Missing configuration leaves shared controls unavailable.
 `GET /api/v1/status` reports configuration presence, not database health.
 
-CSV review remains local and unsent. Declared conversion ingestion, persisted
-bulk operations, identity/SSO, protected-origin enforcement and external
+CSV review alone remains unsent; saving valid reviewed rows requires an explicit
+owner action. Recover an uncertain batch with its same identities before
+separately resuming remaining batches. Authenticated declarations are not
+independently verified purchases. Identity/SSO, protected origins and external
 malware/reputation providers remain open. Address checks fetch no site and do
-not establish malware safety. The full product and portfolio remain unfinished.
+not establish malware safety. Live activation and the full portfolio remain unfinished.
 
 `node scripts/check.mjs` checks syntax/imports/assets/dependencies without
 executing product modules. Database/browser checks belong to the guarded

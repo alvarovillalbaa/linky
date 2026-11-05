@@ -58,6 +58,10 @@ binding and hosted acceptance remain actual activation requirements.
 
 The first service slice implements durable links/revisions, finite grants,
 explicit inspection/redemption, pause/revoke and committed redemption reports.
-Declared conversion ingestion, persistent bulk import, identity/SSO, protected
-origins and reputation integrations remain unfinished. Source or disposable
-checks do not complete those features or the full portfolio goal.
+The additive [service extension](service-extension-database.md) implements
+persisted CSV batches and authenticated declared lead/sale ingestion, including
+current authorization after key rotation, receipt-bound campaigns, exact
+currency totals and independent report coverage. Source, disposable checks
+and applied SQL remain separate evidence boundaries. Identity/SSO, protected
+origins and reputation integrations remain unfinished; no source or narrow
+check completes the full portfolio goal.
