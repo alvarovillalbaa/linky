@@ -42,6 +42,16 @@ export default async function handler(request, result) {
     const path = new URL(request.url, 'https://linky.invalid');
     // A fixed rewrite carries only a closed route name, never credentials/data.
     const routes = path.searchParams.getAll('linky_route');
+    // Temporary redacted probe for the public, inert status route only.
+    if (request.method === 'GET' && (routes.includes('status') || path.pathname === '/api/v1/status')) {
+      const sourcePath = path.searchParams.getAll('path');
+      console.info('LINKY_PUBLIC_ROUTE_PROBE=' + JSON.stringify({
+        pathKind: ['/api/v1', '/api/v1/status', '/api/v1.mjs'].includes(path.pathname) ? path.pathname : 'other',
+        routeHintCount: routes.length, allHintsStatus: routes.every(value => value === 'status'),
+        sourcePathCount: sourcePath.length, allSourcePathsStatus: sourcePath.every(value => value === 'status'),
+        otherQueryCount: [...path.searchParams.keys()].filter(key => !['linky_route', 'path'].includes(key)).length,
+      }));
+    }
     if (routes.length > 1 || (routes.length && (!API_ROUTES.includes(routes[0])
       || (path.pathname !== '/api/v1' && path.pathname !== `/api/v1/${routes[0]}`)))) throw new LinkyError('invalid_request');
     path.searchParams.delete('linky_route');
