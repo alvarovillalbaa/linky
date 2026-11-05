@@ -44,18 +44,20 @@ separate concrete integration decisions; none is silently enabled.
 
 ## Persistence and operating scope
 
-Use shared PostgreSQL, ready to host through Supabase/Vercel. Two current active
-Supabase projects were verified read-only: Still (also serving Kickoff) and
-Dearweek, in the existing Clous organization. No new free slot, paid plan,
-paused-app replacement or permission to reuse a project is inferred.
+Use PostgreSQL through Supabase/Vercel. October's Still/Dearweek active-capacity
+observation is historical. On 5 November Still reported inactive; Supabase
+quoted $0/month and returned dedicated Linky `bfteqhtzyzrinzxmgiee` in Clous.
+No other app's Auth, private objects or privileged credentials are reused.
+See the [dated receipt](results/2026/11-05/source-prerequisites.md).
 
-The [persistent-service proposal](proposals/persistent-service.md) specifies a
-Linky-only schema/login role in Still's existing project, independent owner and
-recipient capabilities, and a pinned PostgreSQL driver. It needs explicit
-approval before implementation of the security model/dependency, and a later
-review of exact migration/check artifacts before any live database change.
+Standing user approval covers the purpose-bound owner/recipient service,
+PostgreSQL source, pinned driver, focused checks and temporary CI. Current
+[database](database-contract.md) and [HTTP](http-contract.md) contracts replace
+the initial source-only preparation. A verified pooler/TLS/runtime credential
+binding and hosted acceptance remain actual activation requirements.
 
-The initial source prepares ungated domain/UI contracts and reviewable policy.
-No live persistent service, migration, credential, Auth change, dependency
-installation, backend/browser check or hosted acceptance is established by
-this preparation. The full product and portfolio goal remain unfinished.
+The first service slice implements durable links/revisions, finite grants,
+explicit inspection/redemption, pause/revoke and committed redemption reports.
+Declared conversion ingestion, persistent bulk import, identity/SSO, protected
+origins and reputation integrations remain unfinished. Source or disposable
+checks do not complete those features or the full portfolio goal.

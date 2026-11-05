@@ -1,6 +1,11 @@
 # Linky persistent-service implementation proposal
 
-29 October 2026. **Awaiting explicit source/security/dependency/CI approval.**
+29 October 2026 proposal. **Standing all-work approval now covers this source,
+security policy, dependency and focused temporary checks (5 November).** The
+[generator passed](../results/2026/11-05/source-prerequisites.md). Current
+[HTTP](../http-contract.md) and [database](../database-contract.md) contracts
+supersede the initial preparation; a dedicated $0 Linky project supersedes the
+historical Still-reuse candidate. Live binding still requires actual evidence.
 This is the first gate, not permission to apply anything to a live database.
 The [four-part product brief](../spec.md) stays intact. The
 [schema contract](../schema-contract.md) specifies the proposed records and

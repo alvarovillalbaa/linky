@@ -1,46 +1,38 @@
-# Service ownership and current preparation
+# Persistent service ownership
 
-29 October 2026. Current source is intentionally unconnected while the new
-security/dependency/migration-source gate is pending. The [full brief](spec.md)
-and [reviewable service proposal](proposals/persistent-service.md) remain binding.
+5 November 2026. This describes source; dated results own actual acceptance
+and hosting evidence. Source alone establishes neither.
 
-## Current source
+The browser keeps credentials and pending write identities in tab memory.
+Shared operations use same-origin bounded JSON POST without ambient cookies
+or automatic write retries. An explicit retry retains its original identity.
+CSV/draft review remains local; no local catalogue replaces PostgreSQL.
+Recipient fragment capture/removal precedes asynchronous work. Inspection,
+redemption and opening the disclosed destination are separate actions.
 
-The browser has one unsent draft and explicit CSV review. It can compute an
-owner-provided destination/UTM candidate and explain source address findings.
-These are real data transformations, not a stored link registry or server
-authorization. Shared create/import/grant/redeem/report actions are disabled;
-the page states `configuration_required` instead of inventing data or sessions.
+`server/http.mjs` owns strict DTOs and recomputes destination/campaign/address
+findings. `server/postgres.mjs` invokes named private functions with bound
+parameters, verified TLS, a single pooled connection and commit-before-success.
+The Vercel adapter converts the public route and bounded raw request body.
+Neither layer fetches destination URLs.
 
-Destination helpers preserve non-owned query bytes and target fragments while
-applying the three owner-edited UTM fields. Replaced parameter names are visible.
-CSV decoding preserves quoted cells/newlines, bounds input and returns row-level
-outcomes for review. No reviewed file silently commits a batch.
+The [database contract](database-contract.md) owns authorization and transactions.
+A non-login owner holds eight private tables and fixed-search-path functions.
+Runtime has no direct table DML or operator capability. Workspace lifetime locks
+serialize rotation/closure; link then grant locks serialize redemption, state
+changes and revocation. Database wall time follows locking. Current authorization
+precedes receipt replay, which precedes checking remaining capacity. A new use,
+immutable receipt, attribution event and audit event commit together.
 
-Attribution helpers validate supplied records, stable event/receipt binding and
-campaign scope. They report `supplied_records_only` coverage, explicit record
-counts, observed times and separate currencies. A supplied batch is not an
-entire workspace/time-window report. Future service reports must select actual
-committed records and state their query coverage before presenting totals.
+Revisions bind the destination, declared campaign and unchecked address review.
+Existing grants never follow later edits. Reports count bounded committed
+redemptions with campaign provenance and explicit coverage, without inferring
+people, arrival or sales. Conversion tables/ingest are not implemented in this
+slice; the interface states their unavailability.
 
-No browser-local catalogue, generated capability, network/API client, private
-session or persistence is present. The presentation is not deployed as a working
-service. Its source, local clipboard/file and layout behavior remain unexecuted.
-
-## Proposed real service
-
-Vercel Node HTTP routes will authenticate separate management, recipient and
-ingest capabilities and call only reviewed private PostgreSQL functions using
-the Linky-specific role. The runtime will not hold a project-wide service key
-or another app's Auth/session. The exact [ten-table contract](schema-contract.md)
-owns immutable revisions, scoped grants, receipts, event provenance and locks.
-
-The proposed Still-project reuse is logical/credential separation, not physical
-isolation. A later approval must review exact SQL, effective privileges, actual
-pooler/TLS configuration, independent acceptance and capacity before any live
-change. No broader permissions or paid/capacity workaround is inferred.
-
-The first implementation approval permits source plus one pinned, temporary
-source-prerequisite job only. All live database/configuration/credential work,
-backend/browser execution and protected-origin enforcement remain later gates.
-Source preparation does not redefine the full portfolio goal as a local utility.
+Operator bootstrap/CLI/recovery remain outside the deployed API. The CLI requires
+its own login and saves the owner credential before writing. Dedicated Linky
+`bfteqhtzyzrinzxmgiee` supersedes October's Still-reuse candidate. Actual pooler,
+TLS, isolated privileges, private credentials and hosted acceptance are separate
+activation requirements. Protected origins, persisted bulk operations,
+conversions, identity and reputation remain full-product work.

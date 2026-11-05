@@ -16,9 +16,12 @@ async function inspect(directory) {
     }
   }
 }
-for (const path of ['public/src/', 'tests/', 'scripts/']) await inspect(new URL(path, root));
+for (const path of ['public/src/', 'tests/', 'scripts/', 'server/', 'api/']) await inspect(new URL(path, root));
 const manifest = JSON.parse(await readFile(new URL('package.json', root), 'utf8'));
-if (manifest.dependencies || manifest.devDependencies) throw new Error('Dependency changes require the separate Linky source gate.');
+if (JSON.stringify(manifest.dependencies) !== JSON.stringify({ pg: '8.23.1' }) || manifest.devDependencies || manifest.engines.node !== '24.x') throw new Error('Unexpected application dependency or runtime.');
+const lock = JSON.parse(await readFile(new URL('package-lock.json', root), 'utf8'));
+if (lock.lockfileVersion !== 3 || lock.packages['node_modules/pg'].version !== '8.23.1'
+  || lock.packages['node_modules/pg'].integrity !== 'sha512-aL96AHANtWjPLDOLqnhx+ngp9+UK7ETEU8VJrDCGvsSSi/mGLcWYsS6Herg7lmaBJe4uwrfqsa7gTEFaSizDoQ==') throw new Error('Driver lock changed.');
 for (const path of ['README.md', 'AGENTS.md', 'docs/spec.md', 'docs/schema-contract.md', 'docs/proposals/persistent-service.md', 'public/index.html', 'public/styles.css']) {
   if (!(await readFile(new URL(path, root), 'utf8')).trim()) throw new Error(`Empty required file: ${path}`);
 }

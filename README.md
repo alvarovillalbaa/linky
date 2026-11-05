@@ -1,42 +1,50 @@
 # Linky
 
-Link management, access controls, attribution and destination review.
+Manage destinations, make recipient access deliberate, and count committed
+redemptions without claiming they are people, visits or sales.
 
-**Persistent-service preparation, not a working hosted platform.** The
-[complete brief](docs/spec.md) needs a real shared control plane and resolver.
-No database, sign-in, capability enforcement or hosted service is configured.
+The source includes a PostgreSQL-backed owner workspace and recipient flow:
+create/revise destinations, issue finite expiring grants, inspect the hostname,
+explicitly redeem, recover a committed receipt after an uncertain reply, and
+pause/revoke. Existing grants retain their destination revision. An ordinary URL
+already disclosed remains usable outside Linky's gate.
 
-Current source provides an operator/recipient presentation, one unsent draft
-with actual URL/UTM review, bounded CSV previews and supplied-event attribution
-logic. It does not store a local substitute catalogue or show sample metrics.
-Shared actions explicitly require backend setup and remain disabled.
+The interface starts empty and needs a privately provisioned owner credential.
+There is no public signup, shared Auth session, demo catalogue or local-storage
+fallback. Recipient secrets are captured from the original grant fragment,
+removed from history and kept in tab memory. Inspection consumes no use and
+reveals no usable URL. Opening the committed destination is a separate choice.
 
-- `public/`: presentation and dependency-free data helpers. Reputation remains
-  unchecked; source address findings are not a malware verdict.
-- `tests/unit/`: 34 authored destination/attribution cases, unexecuted.
-- [Service proposal](docs/proposals/persistent-service.md): independent owner,
-  recipient and ingest capabilities, PostgreSQL source and proposed driver/CI.
-- [Schema contract](docs/schema-contract.md): ten proposed records, restricted
-  private functions/roles and atomic redemption/idempotency invariants.
-- [Source receipt](docs/results/2026/10-29/source-preparation.md): inspected
-  intent/provider metadata, source verification and outstanding gates.
+Source acceptance and live binding are recorded separately. Dedicated free
+Supabase project `bfteqhtzyzrinzxmgiee` belongs to Clous; verified pooler/TLS and
+independent runtime/operator credentials remain activation requirements.
+Never deploy the operator connection or a project-wide service key.
 
-The first approval would permit implementing the new security model, authoring
-the SQL artifact, pinning `pg@8.23.1` and one temporary source-prerequisite CI
-job. It does **not** permit a live migration/role, sharing another app's Auth,
-credentials, provider configuration, backend/browser tests or production rollout.
-The prepared source-prerequisite workflow is inactive under `docs/proposals/`.
+Read the [full brief](docs/spec.md), [HTTP contract](docs/http-contract.md),
+[database contract](docs/database-contract.md), [architecture](docs/architecture.md)
+and [acceptance scope](docs/proposals/persistent-service-checks.md).
+The [generator receipt](docs/results/2026/11-05/source-prerequisites.md) records
+the exact pg lock and CLI-generated migration scaffold.
 
-```sh
-node scripts/check.mjs
-git diff --check
-```
+Operator provisioning uses `node scripts/provision-workspace.mjs --name <name>
+--recovery-file <private-file>` with a separate `LINKY_OPERATOR_DATABASE_URL`
+and optional `LINKY_PG_CA`. The actual login must be `linky_operator`.
+A mode-0600 owner recovery file is synced before the write. Retain it and retry
+the same command after an uncertain acknowledgment; the key is never printed.
+Bootstrap and migration are operator artifacts. Rollback is destructive and
+requires an explicit reviewed export/approval for live data.
 
-These parse source and check relative imports/assets/documents without importing
-product modules or executing tests. No dependency installation is needed for
-this preparation. Node 22+; the proposed backend/CI targets Node 24 explicitly.
+Vercel uses Node 24 and server-only `LINKY_DATABASE_URL`,
+`LINKY_PUBLIC_ORIGIN`, optional `LINKY_PG_CA`. Runtime uses only its restricted
+login, verified TLS, one pooled connection and unnamed parameterized queries.
+Missing configuration leaves shared controls unavailable.
+`GET /api/v1/status` reports configuration presence, not database health.
 
-A link gate cannot revoke an ordinary target URL already learned. Protected
-origin integration and genuine shared persistence remain open under the full
-product goal. Attribution counts supplied/committed records, not unique people
-or independently verified purchases. MIT licensed.
+CSV review remains local and unsent. Declared conversion ingestion, persisted
+bulk operations, identity/SSO, protected-origin enforcement and external
+malware/reputation providers remain open. Address checks fetch no site and do
+not establish malware safety. The full product and portfolio remain unfinished.
+
+`node scripts/check.mjs` checks syntax/imports/assets/dependencies without
+executing product modules. Database/browser checks belong to the guarded
+disposable CI scope; Storage Guard blocks local installs/test databases.

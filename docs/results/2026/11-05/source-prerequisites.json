@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "9e8afe3703706f663c978648b4be8e2b25222752",
+  "run": 41991216097,
+  "job": 127123650194,
+  "startedAt": "2026-11-05T08:00:31Z",
+  "completedAt": "2026-11-05T08:00:49Z",
+  "conclusion": "success",
+  "manifest": {
+    "schemaVersion": 1,
+    "nodeVersion": "v24.21.0",
+    "pg": "8.23.1",
+    "supabaseCLI": "2.122.0",
+    "sources": [
+      {
+        "path": "package-lock.json",
+        "sha256": "b7e3f953ff3d176425cdc6add156564040ceabe2c69ca6c06f60fdf654884316"
+      },
+      {
+        "path": "supabase/migrations/20261105080045_linky_initial_service.sql",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ],
+    "productTestsExecuted": 0,
+    "databaseConnections": 0
+  },
+  "scaffoldPath": "supabase/migrations/20261105080045_linky_initial_service.sql",
+  "scaffoldBytes": 0,
+  "retirementCommit": "928e865",
+  "productTestsExecuted": 0,
+  "databaseConnections": 0
+}
