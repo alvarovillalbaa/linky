@@ -1,7 +1,7 @@
 import { spawn, execFileSync } from 'node:child_process';
 import { readFile, readdir, writeFile, lstat } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
-import { deflateSync } from 'node:zlib';
+import { deflateSync, inflateSync } from 'node:zlib';
 import assert from 'node:assert/strict';
 
 if (process.env.CI !== 'true' || process.env.LINKY_DISPOSABLE_DATABASE !== 'true') throw new Error('Disposable CI scope required.');
@@ -71,9 +71,38 @@ async function run(name, args, capMs) {
 }
 try {
   await run('source checks', ['scripts/check.mjs'], 60000);
-  const unit = (await readdir('tests/unit')).filter(x => x.endsWith('.test.mjs')).sort().map(x => `tests/unit/${x}`);
-  await run('unit and HTTP boundary checks', ['--test', '--test-reporter=tap', ...unit], 120000);
-  await run('real PostgreSQL checks', ['--test', '--test-reporter=tap', 'tests/integration/database.test.mjs'], 180000);
+  if (process.env.LINKY_REUSE_BACKEND_RECEIPT === 'service-attempt-1') {
+    const path = 'docs/results/2026/11-05/service-attempt-1.json';
+    const raw = await readFile(path); const previous = JSON.parse(raw);
+    assert.equal(hash(raw), '91952a4560a6acc13e653280d95072eaa9faaff324e399807adf2cc3cb48a102');
+    assert.equal(previous.before.head, 'b9405c02c8bf4defdd46c28a75b10af98d6b9d11');
+    assert.equal(previous.node, process.version); assert.equal(previous.sourceUnchanged, true);
+    assert.deepEqual(previous.after, previous.before);
+    const current = new Map(before.files.map(file => [file.path, file]));
+    const stable = previous.before.files.filter(file => !file.path.startsWith('docs/') && !file.path.startsWith('.github/')
+      && !['AGENTS.md', 'README.md', 'scripts/ci-checks.mjs', 'tests/browser/service.mjs'].includes(file.path));
+    for (const file of stable) assert.deepEqual(current.get(file.path), file);
+    const carried = [];
+    for (const [name, count] of [['unit and HTTP boundary checks', 50], ['real PostgreSQL checks', 18]]) {
+      const command = previous.commands.find(row => row.name === name);
+      assert(command && command.code === 0 && command.closeObserved && command.groupGone && !command.timedOut && !command.interrupted);
+      for (const stream of command.streams) {
+        const bytes = inflateSync(Buffer.from(stream.zlibBase64, 'base64'));
+        assert.equal(bytes.length, stream.bytes); assert.equal(hash(bytes), stream.sha256);
+        if (stream.stream === 'stdout') {
+          const output = bytes.toString('utf8');
+          for (const [key, number] of [['tests', count], ['pass', count], ['fail', 0], ['cancelled', 0], ['skipped', 0], ['todo', 0]]) assert(new RegExp(`^# ${key} ${number}$`, 'm').test(output));
+        }
+      }
+      carried.push({ name, passedCases: count, repeatedCases: 0 });
+    }
+    receipt.carriedForward = { path, sha256: hash(raw), stableInputCount: stable.length, sourceCommit: previous.before.head, commands: carried };
+    await run('prepare fresh disposable schema', ['scripts/setup-disposable.mjs'], 60000);
+  } else {
+    const unit = (await readdir('tests/unit')).filter(x => x.endsWith('.test.mjs')).sort().map(x => `tests/unit/${x}`);
+    await run('unit and HTTP boundary checks', ['--test', '--test-reporter=tap', ...unit], 120000);
+    await run('real PostgreSQL checks', ['--test', '--test-reporter=tap', 'tests/integration/database.test.mjs'], 180000);
+  }
   await run('desktop and narrow browser journeys', ['tests/browser/service.mjs'], 180000);
   receipt.passed = true;
 } catch (error) { receipt.passed = false; receipt.failure = error.message; }
@@ -81,6 +110,7 @@ try { receipt.after = await seal(); assert.deepEqual(receipt.after, before); rec
 catch { receipt.sourceUnchanged = false; receipt.passed = false; }
 receipt.finishedAt = new Date().toISOString();
 receipt.interrupted = interrupted;
+if (interrupted) receipt.passed = false;
 for (const [signal, handler] of signalHandlers) process.removeListener(signal, handler);
 await writeFile(process.env.RUNNER_TEMP + '/linky-check-receipt.json', JSON.stringify(receipt));
 console.log('LINKY_CHECK_RECEIPT=' + deflateSync(Buffer.from(JSON.stringify(receipt))).toString('base64'));

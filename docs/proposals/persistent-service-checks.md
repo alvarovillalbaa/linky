@@ -24,6 +24,12 @@ job cleanup removes only its installed dependencies/tools/browser cache and the
 service container. Failed evidence remains; a later pass cannot rewrite it.
 No timeout, assertion or permission boundary is relaxed to obtain a pass.
 
+After attempt 1, the 50 unit/HTTP and 18 real-PG cases are closed. The browser
+retry validates their pinned receipt, raw-stream digests and all unchanged
+application/backend inputs, prepares the same schema in a fresh owned database,
+and repeats zero accepted backend cases. Its only journey change explicitly
+navigates to Links after reloading Attribution. The first failure stays immutable.
+
 The workflow remains an inactive proposal except on the task-owned QA branch.
 Retire its active workflow after terminal execution. These checks establish
 only the recorded disposable environments; live pooler/TLS, deployed secrets,

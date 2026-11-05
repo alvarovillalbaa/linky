@@ -157,6 +157,7 @@ try {
       await owner.reload();
       await within(async () => assert.match(await owner.locator('#owner-state').textContent(), /credential|Connect|Disconnected/u));
       await owner.locator('#owner-key').fill(recovery.ownerKey); await owner.locator('#owner-connect').click();
+      await owner.locator('[data-view="links"]').click();
       await owner.getByRole('button', { name: `Manage Revised ${name}`, exact: true }).waitFor();
       assert.deepEqual(errors, []); assert.deepEqual(unexpected, []);
       assert.deepEqual(observedDenials.map(({ status, path }) => ({ status, path })), expectedDenials.map(({ status, path }) => ({ status, path })));

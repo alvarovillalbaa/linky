@@ -25,6 +25,7 @@ jobs:
       CI: 'true'
       LINKY_DISPOSABLE_DATABASE: 'true'
       LINKY_DISPOSABLE_DB: linky-pg17-ci-v1
+      LINKY_REUSE_BACKEND_RECEIPT: service-attempt-1
       LINKY_TEST_DATABASE_URL: postgresql://postgres:authored-ci-only@127.0.0.1:5432/linky_checks
       PLAYWRIGHT_BROWSERS_PATH: /tmp/linky-browser-20261105
     steps:
