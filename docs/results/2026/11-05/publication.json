@@ -1,0 +1,519 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-11-05T09:04:45Z",
+  "repository": "alvarovillalbaa/linky",
+  "url": "https://linky-alvaro.vercel.app",
+  "team": {
+    "id": "team_JpdIsOJgYNpX0ywVZ54Zdb7m",
+    "name": "Clous Team"
+  },
+  "project": {
+    "id": "prj_AGu9DYlJANbOhwV6NTf3oZXNzXhQ",
+    "name": "linky-alvaro",
+    "nodeVersion": "24.x",
+    "framework": null
+  },
+  "deployment": {
+    "id": "dpl_GxMnCgTdA2SETEqvzvAXxm7PGdJe",
+    "source": "09b4062e3e236fdc8b1dfdba9def2869a780386f",
+    "state": "READY",
+    "target": "production",
+    "buildingAt": 1793869287125,
+    "readyAt": 1793869295567,
+    "buildDurationMs": 8442
+  },
+  "readiness": "unconfigured-review",
+  "liveDatabaseBound": false,
+  "liveWorkspaceProvisioned": false,
+  "earlierFailure": {
+    "deployment": "dpl_4gZ9Qty9bvUJLF243mhqhXZH9hNk",
+    "source": "113bbb8c4ef24cd5cc41f1078757bd27880e097e",
+    "statusEndpoint": 400,
+    "code": "invalid_request",
+    "fiveStaticAssetsMatched": true
+  },
+  "diagnostic": {
+    "deployment": "dpl_Af8FqXxmVezrjEfWBDmQxmq9xiEJ",
+    "source": "2acc6e6faca88a14b243c083fb62ba2dd0baf6e3",
+    "publicMetadata": {
+      "pathKind": "/api/v1/status",
+      "routeHintCount": 1,
+      "allHintsStatus": true,
+      "sourcePathCount": 1,
+      "allSourcePathsStatus": true,
+      "otherQueryCount": 0
+    },
+    "rawValuesLogged": false,
+    "removed": true
+  },
+  "producerRepair": {
+    "source": "09b4062e3e236fdc8b1dfdba9def2869a780386f",
+    "vercelJsonSHA256": "0f32f508d83db992db4b26e718ec7af427ff331aaf9849f4503a6bcdbc015e91",
+    "apiRestoredSHA256": "4c6f3a2532adee4180a55979cb4e2c3946164074a415d5c32ed7b81f9902dfff",
+    "primarySource": "https://github.com/vercel/vercel/blob/main/packages/routing-utils/src/superstatic.ts#L509-L560",
+    "unknownQueryValidationUnchanged": true
+  },
+  "requests": [
+    {
+      "name": "route-2",
+      "path": "/api/v1/owner/rotate",
+      "method": "GET",
+      "expected": 405,
+      "status": 405,
+      "exitCode": 0,
+      "bytes": 39,
+      "sha256": "24522f41d219130511f61392ce811d7fb2f2feeb439c9ef9717146dc6d5d3263",
+      "cache-control": "no-store",
+      "referrer-policy": "no-referrer",
+      "x-content-type-options": "nosniff",
+      "x-frame-options": "DENY",
+      "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
+      "body": {
+        "error": {
+          "code": "method_not_allowed"
+        }
+      }
+    },
+    {
+      "name": "route-0",
+      "path": "/api/v1/status",
+      "method": "GET",
+      "expected": 200,
+      "status": 200,
+      "exitCode": 0,
+      "bytes": 99,
+      "sha256": "73ca1696f7682644edb3fa718ab89296fe99e784114b0c362574c62b23d0295d",
+      "cache-control": "no-store",
+      "referrer-policy": "no-referrer",
+      "x-content-type-options": "nosniff",
+      "x-frame-options": "DENY",
+      "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
+      "body": {
+        "service": "linky",
+        "configuration": "required",
+        "database": "unverified",
+        "conversionsAvailable": false
+      }
+    },
+    {
+      "name": "route-1",
+      "path": "/api/v1/owner/connect",
+      "method": "GET",
+      "expected": 405,
+      "status": 405,
+      "exitCode": 0,
+      "bytes": 39,
+      "sha256": "24522f41d219130511f61392ce811d7fb2f2feeb439c9ef9717146dc6d5d3263",
+      "cache-control": "no-store",
+      "referrer-policy": "no-referrer",
+      "x-content-type-options": "nosniff",
+      "x-frame-options": "DENY",
+      "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
+      "body": {
+        "error": {
+          "code": "method_not_allowed"
+        }
+      }
+    },
+    {
+      "name": "route-3",
+      "path": "/api/v1/owner/close",
+      "method": "GET",
+      "expected": 405,
+      "status": 405,
+      "exitCode": 0,
+      "bytes": 39,
+      "sha256": "24522f41d219130511f61392ce811d7fb2f2feeb439c9ef9717146dc6d5d3263",
+      "cache-control": "no-store",
+      "referrer-policy": "no-referrer",
+      "x-content-type-options": "nosniff",
+      "x-frame-options": "DENY",
+      "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
+      "body": {
+        "error": {
+          "code": "method_not_allowed"
+        }
+      }
+    },
+    {
+      "name": "route-4",
+      "path": "/api/v1/links/list",
+      "method": "GET",
+      "expected": 405,
+      "status": 405,
+      "exitCode": 0,
+      "bytes": 39,
+      "sha256": "24522f41d219130511f61392ce811d7fb2f2feeb439c9ef9717146dc6d5d3263",
+      "cache-control": "no-store",
+      "referrer-policy": "no-referrer",
+      "x-content-type-options": "nosniff",
+      "x-frame-options": "DENY",
+      "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
+      "body": {
+        "error": {
+          "code": "method_not_allowed"
+        }
+      }
+    },
+    {
+      "name": "route-7",
+      "path": "/api/v1/links/state",
+      "method": "GET",
+      "expected": 405,
+      "status": 405,
+      "exitCode": 0,
+      "bytes": 39,
+      "sha256": "24522f41d219130511f61392ce811d7fb2f2feeb439c9ef9717146dc6d5d3263",
+      "cache-control": "no-store",
+      "referrer-policy": "no-referrer",
+      "x-content-type-options": "nosniff",
+      "x-frame-options": "DENY",
+      "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
+      "body": {
+        "error": {
+          "code": "method_not_allowed"
+        }
+      }
+    },
+    {
+      "name": "route-5",
+      "path": "/api/v1/links/create",
+      "method": "GET",
+      "expected": 405,
+      "status": 405,
+      "exitCode": 0,
+      "bytes": 39,
+      "sha256": "24522f41d219130511f61392ce811d7fb2f2feeb439c9ef9717146dc6d5d3263",
+      "cache-control": "no-store",
+      "referrer-policy": "no-referrer",
+      "x-content-type-options": "nosniff",
+      "x-frame-options": "DENY",
+      "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
+      "body": {
+        "error": {
+          "code": "method_not_allowed"
+        }
+      }
+    },
+    {
+      "name": "route-6",
+      "path": "/api/v1/links/revise",
+      "method": "GET",
+      "expected": 405,
+      "status": 405,
+      "exitCode": 0,
+      "bytes": 39,
+      "sha256": "24522f41d219130511f61392ce811d7fb2f2feeb439c9ef9717146dc6d5d3263",
+      "cache-control": "no-store",
+      "referrer-policy": "no-referrer",
+      "x-content-type-options": "nosniff",
+      "x-frame-options": "DENY",
+      "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
+      "body": {
+        "error": {
+          "code": "method_not_allowed"
+        }
+      }
+    },
+    {
+      "name": "route-11",
+      "path": "/api/v1/recipient/inspect",
+      "method": "GET",
+      "expected": 405,
+      "status": 405,
+      "exitCode": 0,
+      "bytes": 39,
+      "sha256": "24522f41d219130511f61392ce811d7fb2f2feeb439c9ef9717146dc6d5d3263",
+      "cache-control": "no-store",
+      "referrer-policy": "no-referrer",
+      "x-content-type-options": "nosniff",
+      "x-frame-options": "DENY",
+      "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
+      "body": {
+        "error": {
+          "code": "method_not_allowed"
+        }
+      }
+    },
+    {
+      "name": "route-10",
+      "path": "/api/v1/grants/revoke",
+      "method": "GET",
+      "expected": 405,
+      "status": 405,
+      "exitCode": 0,
+      "bytes": 39,
+      "sha256": "24522f41d219130511f61392ce811d7fb2f2feeb439c9ef9717146dc6d5d3263",
+      "cache-control": "no-store",
+      "referrer-policy": "no-referrer",
+      "x-content-type-options": "nosniff",
+      "x-frame-options": "DENY",
+      "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
+      "body": {
+        "error": {
+          "code": "method_not_allowed"
+        }
+      }
+    },
+    {
+      "name": "route-8",
+      "path": "/api/v1/grants/issue",
+      "method": "GET",
+      "expected": 405,
+      "status": 405,
+      "exitCode": 0,
+      "bytes": 39,
+      "sha256": "24522f41d219130511f61392ce811d7fb2f2feeb439c9ef9717146dc6d5d3263",
+      "cache-control": "no-store",
+      "referrer-policy": "no-referrer",
+      "x-content-type-options": "nosniff",
+      "x-frame-options": "DENY",
+      "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
+      "body": {
+        "error": {
+          "code": "method_not_allowed"
+        }
+      }
+    },
+    {
+      "name": "route-9",
+      "path": "/api/v1/grants/list",
+      "method": "GET",
+      "expected": 405,
+      "status": 405,
+      "exitCode": 0,
+      "bytes": 39,
+      "sha256": "24522f41d219130511f61392ce811d7fb2f2feeb439c9ef9717146dc6d5d3263",
+      "cache-control": "no-store",
+      "referrer-policy": "no-referrer",
+      "x-content-type-options": "nosniff",
+      "x-frame-options": "DENY",
+      "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
+      "body": {
+        "error": {
+          "code": "method_not_allowed"
+        }
+      }
+    },
+    {
+      "name": "status-head",
+      "path": "/api/v1/status",
+      "method": "HEAD",
+      "expected": 200,
+      "status": 200,
+      "exitCode": 0,
+      "bytes": 486,
+      "sha256": "76319d6c754273e0ef27623e1939eb8cf4069a3f6c062b1621577c5cd0f85234",
+      "cache-control": "no-store",
+      "referrer-policy": "no-referrer",
+      "x-content-type-options": "nosniff",
+      "x-frame-options": "DENY",
+      "content-security-policy": "default-src 'none'; frame-ancestors 'none'"
+    },
+    {
+      "name": "route-12",
+      "path": "/api/v1/recipient/redeem",
+      "method": "GET",
+      "expected": 405,
+      "status": 405,
+      "exitCode": 0,
+      "bytes": 39,
+      "sha256": "24522f41d219130511f61392ce811d7fb2f2feeb439c9ef9717146dc6d5d3263",
+      "cache-control": "no-store",
+      "referrer-policy": "no-referrer",
+      "x-content-type-options": "nosniff",
+      "x-frame-options": "DENY",
+      "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
+      "body": {
+        "error": {
+          "code": "method_not_allowed"
+        }
+      }
+    },
+    {
+      "name": "route-13",
+      "path": "/api/v1/reports/redemptions",
+      "method": "GET",
+      "expected": 405,
+      "status": 405,
+      "exitCode": 0,
+      "bytes": 39,
+      "sha256": "24522f41d219130511f61392ce811d7fb2f2feeb439c9ef9717146dc6d5d3263",
+      "cache-control": "no-store",
+      "referrer-policy": "no-referrer",
+      "x-content-type-options": "nosniff",
+      "x-frame-options": "DENY",
+      "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
+      "body": {
+        "error": {
+          "code": "method_not_allowed"
+        }
+      }
+    },
+    {
+      "name": "unconfigured-post",
+      "path": "/api/v1/owner/connect",
+      "method": "POST",
+      "expected": 503,
+      "status": 503,
+      "exitCode": 0,
+      "bytes": 41,
+      "sha256": "fb47bc92087c2f02c1955ca70557c20998aa21c4a58d32fdcd00650b886aa3a3",
+      "cache-control": "no-store",
+      "referrer-policy": "no-referrer",
+      "x-content-type-options": "nosniff",
+      "x-frame-options": "DENY",
+      "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
+      "body": {
+        "error": {
+          "code": "backend_unconfigured"
+        }
+      }
+    },
+    {
+      "name": "unknown-query",
+      "path": "/api/v1/status?unexpected=value",
+      "method": "GET",
+      "expected": 400,
+      "status": 400,
+      "exitCode": 0,
+      "bytes": 36,
+      "sha256": "9709956ad4554d08d61fdbaa3a14997a02251ff75264facea02cac2d6b60bf7a",
+      "cache-control": "no-store",
+      "referrer-policy": "no-referrer",
+      "x-content-type-options": "nosniff",
+      "x-frame-options": "DENY",
+      "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
+      "body": {
+        "error": {
+          "code": "invalid_request"
+        }
+      }
+    },
+    {
+      "name": "unknown-route",
+      "path": "/api/v1/unknown",
+      "method": "GET",
+      "expected": 404,
+      "status": 400,
+      "exitCode": 0,
+      "bytes": 36,
+      "sha256": "9709956ad4554d08d61fdbaa3a14997a02251ff75264facea02cac2d6b60bf7a",
+      "cache-control": "no-store",
+      "referrer-policy": "no-referrer",
+      "x-content-type-options": "nosniff",
+      "x-frame-options": "DENY",
+      "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
+      "body": {
+        "error": {
+          "code": "invalid_request"
+        }
+      }
+    },
+    {
+      "name": "index-final",
+      "path": "/",
+      "method": "GET",
+      "expected": 200,
+      "status": 200,
+      "exitCode": 0,
+      "bytes": 19818,
+      "sha256": "a5cd5ee8c8cdcb34285fc827091dfb61d64b171cde66004bc330ae81e4b3470a",
+      "cache-control": "no-store",
+      "referrer-policy": "no-referrer",
+      "x-content-type-options": "nosniff",
+      "x-frame-options": "DENY",
+      "content-security-policy": "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'",
+      "source": "index.html",
+      "matchesSource": true
+    },
+    {
+      "name": "recipient-final",
+      "path": "/r/10000000-0000-4000-8000-000000000001",
+      "method": "GET",
+      "expected": 200,
+      "status": 200,
+      "exitCode": 0,
+      "bytes": 19818,
+      "sha256": "a5cd5ee8c8cdcb34285fc827091dfb61d64b171cde66004bc330ae81e4b3470a",
+      "cache-control": "no-store",
+      "referrer-policy": "no-referrer",
+      "x-content-type-options": "nosniff",
+      "x-frame-options": "DENY",
+      "content-security-policy": "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'",
+      "source": "index.html",
+      "matchesSource": true
+    },
+    {
+      "name": "client-final",
+      "path": "/src/server-client.mjs",
+      "method": "GET",
+      "expected": 200,
+      "status": 200,
+      "exitCode": 0,
+      "bytes": 3019,
+      "sha256": "da1ecd0d03f17077fd23528fcd5cbd73d73406ca6f62d794c7b81dd88bf09a56",
+      "cache-control": "no-store",
+      "referrer-policy": "no-referrer",
+      "x-content-type-options": "nosniff",
+      "x-frame-options": "DENY",
+      "content-security-policy": "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'",
+      "source": "src/server-client.mjs",
+      "matchesSource": true
+    },
+    {
+      "name": "app-final",
+      "path": "/src/app.mjs",
+      "method": "GET",
+      "expected": 200,
+      "status": 200,
+      "exitCode": 0,
+      "bytes": 50889,
+      "sha256": "c66e447973a99ef06fa48c1ec8ca613c3daeec8019a75afc518baf9b427070d2",
+      "cache-control": "no-store",
+      "referrer-policy": "no-referrer",
+      "x-content-type-options": "nosniff",
+      "x-frame-options": "DENY",
+      "content-security-policy": "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'",
+      "source": "src/app.mjs",
+      "matchesSource": true
+    },
+    {
+      "name": "css-final",
+      "path": "/styles.css",
+      "method": "GET",
+      "expected": 200,
+      "status": 200,
+      "exitCode": 0,
+      "bytes": 27854,
+      "sha256": "9504ec0ff7633c298b29f096c1c6235958faa9f2937406db3a64b769af29254e",
+      "cache-control": "no-store",
+      "referrer-policy": "no-referrer",
+      "x-content-type-options": "nosniff",
+      "x-frame-options": "DENY",
+      "content-security-policy": "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'",
+      "source": "styles.css",
+      "matchesSource": true
+    }
+  ],
+  "expectationCorrection": {
+    "name": "unknown-route",
+    "initialExpected": 404,
+    "observed": 400,
+    "adapterContractExpected": 400,
+    "basis": "Existing accepted adapter case rejects an unknown rewrite hint as invalid_request; direct Web-handler unknown routes use404. Clarified docs; no request-validation change."
+  },
+  "runtimeErrorScan": {
+    "deployment": "dpl_GxMnCgTdA2SETEqvzvAXxm7PGdJe",
+    "level": [
+      "error"
+    ],
+    "limit": 20,
+    "from": "2026-11-05T08:14:44.355Z",
+    "to": "2026-11-05T09:04:44.355Z",
+    "returnedLogs": 0,
+    "continuousMonitoringProven": false
+  },
+  "temporaryHttpFiles": {"ownedFiles":53,"bytes":256739,"ownerAndTypeVerified":true,"unexpectedFiles":0,"removed":true},
+  "productProofLimit": "No live owner/recipient/database acceptance. All70 product cases refer to recorded disposable environments; runtime/app/test bytes unchanged, Vercel config repaired and verified separately."
+}

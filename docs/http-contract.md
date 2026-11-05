@@ -123,11 +123,18 @@ revoked outside Linky. The UI does not automatically open an undisclosed target.
 ## Failure and deployment boundary
 
 All errors are `{error:{code}}` with finite public codes. Validation is 400,
-credentials 401, scope/origin 403, unknown route 404, unsupported method 405,
+credentials 401, scope/origin 403, unknown Web-handler route 404, unsupported method 405,
 CAS/idempotency/inactive/exhausted 409, body timeout 408, revoked/expired/closed 410, body overflow
 413, non-JSON 415 and unavailable/configuration 503. Raw SQL, parameters,
 capabilities and private targets never appear in error responses. An uncertain
 commit is an unavailable response, not an invented rollback acknowledgment.
+
+Vercel's adapter rejects an unknown/conflicting rewrite hint as `invalid_request`
+(400), before the Web handler. This is the same closed allowlist exercised by
+its adapter cases; the deployed unknown-route rejection therefore differs from
+the Web handler's direct 404. The source capture is named `linky_route` and
+the destination is `/api/v1`; Vercel supplies only that expected route hint.
+Do not strip unknown query keys to accommodate a routing mistake.
 
 `LINKY_DATABASE_URL`, `LINKY_PUBLIC_ORIGIN` and optional `LINKY_PG_CA` are private
 runtime configuration. Connection URL query parameters are refused so they
