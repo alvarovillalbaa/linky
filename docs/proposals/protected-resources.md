@@ -1,8 +1,10 @@
 # Protected resources, V3
 
-Status: implementation and disposable qualification authorized by the user's
-standing approval. This source does not activate the live database or bind a
-production credential. V1/V2 migrations and accepted receipts remain immutable.
+Status: implementation and 53-case disposable qualification accepted under the
+user's standing approval. [Results](../results/2026/11-14/protected-resources.md)
+retain failures and exact carry-forward boundaries. This source does not activate
+the inactive live database or bind a production credential. Accepted migrations
+and historical receipts remain immutable.
 
 Linky's redirect gate cannot recall a destination URL. An integrating resource
 server must call Linky before every GET/HEAD and prevent alternate public/static
@@ -74,9 +76,10 @@ potentially waiting lock and checks both expiries there. See PostgreSQL's
 The local Supabase 2.117.0 scaffold command failed before generation because it
 attempted a telemetry write outside the allowed workspace (two attempts, including
 the absolute executable). No permission boundary was bypassed. The owned remote
-qualification will generate the additive migration using pinned Supabase 2.122.0,
-record its empty scaffold and populated hashes, and return the completed file.
-The SQL proposal is not represented as an already generated/applied migration.
+qualification generated the additive migration using pinned Supabase 2.122.0,
+recorded its empty scaffold and populated hashes, and returned the completed
+supabase/migrations/20261114200848_linky_protected_resources.sql file. Its bytes
+match the proposal exactly. This is not evidence of live application.
 
 ## Host and browser boundaries
 

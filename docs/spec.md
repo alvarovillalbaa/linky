@@ -30,7 +30,10 @@ revoked grant cannot redisclose the destination through an old receipt.
 The gate controls Linky disclosure/redemption. An already disclosed ordinary
 destination URL remains usable outside Linky. Strong resource-level revocation
 requires origin-enforced grants or a separately approved protected-resource
-integration; this remains open and must not be claimed as completed by redirects.
+integration. The [V3 source](proposals/protected-resources.md) now supplies that
+guard and separate receipt access, with [disposable acceptance](results/2026/11-14/protected-resources.md).
+The live database is inactive, V3 is not applied there and no resource host has
+been installed. Redirects alone still do not establish resource protection.
 
 Attribution records committed redemptions and separately authenticated declared
 lead/sale events, with campaign provenance and explicit denominators. Retries

@@ -26,14 +26,18 @@
 - Owner, recipient and conversion-ingest capabilities must have separate
   purposes. No secret enters
   a committed fixture, public record, query string, log or analytics event.
-- Both generated migrations are immutable after acceptance/application. Add new
+- All accepted generated migrations are immutable after acceptance/application. Add new
   versions; do not rewrite the V1/V2 SQL or historical raw receipts.
 - GET/HEAD must never consume a use. Redemption/revocation serialize
   under database locks, use database wall time after locking, and commit a
   stable idempotent receipt before returning a destination. No memory counter.
 - Redirect gating cannot revoke access to a destination already learned.
-  Origin-enforced resource access is separate unfinished scope; do not claim
-  the link gate protects arbitrary downstream files or pages.
+  Origin-enforced V3 source acceptance is docs/results/2026/11-14/protected-resources.md:
+  27 protocol, 22 real PG and four browser cases, with byte-bound carried results.
+  Do not repeat closed scopes without changed inputs or a concrete concern.
+  The generated V3 is not live-applied; the dedicated project reported INACTIVE
+  on 14 November. Runtime/TLS/operator/host installation remain unbound. Never
+  claim a deployed redirect or issued key protects an unwrapped downstream route.
 - Attribution reports observed committed redemptions and authenticated declared
   conversion events separately, never unique people, arrival or verified sales.
   Address checks are not a malware/reputation guarantee.
