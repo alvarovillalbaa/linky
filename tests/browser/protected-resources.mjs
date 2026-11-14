@@ -97,13 +97,15 @@ try {
     await page.goto(origin + '/r/' + fixture.grantId + '#' + fixture.recipientKey); assert.equal(new URL(page.url()).hash, '');
     await eventually(async () => assert.equal(await page.locator('#recipient-inspect').isEnabled(), true)); await page.locator('#recipient-inspect').click();
     await eventually(async () => assert.equal(await page.locator('#recipient-redeem').isEnabled(), true)); await page.locator('#recipient-redeem').click();
-    await page.locator('#inspect-resource').waitFor(); await page.locator('#inspect-resource').click(); await page.locator('#prepare-resource').waitFor(); return page;
+    await page.locator('#inspect-resource').waitFor(); assert.equal(await page.locator('#recipient-usage').textContent(), 'Inspect again');
+    await page.locator('#inspect-resource').click(); await page.locator('#prepare-resource').waitFor(); return page;
   };
   const download = async (page, name) => {
     const pending = page.waitForEvent('download'); await page.locator('#download-resource').click(); const file = await pending;
     const path = join(evidence, name + '.bin'); await file.saveAs(path); const saved = await readFile(path); assert.deepEqual(saved, bytes);
     downloads.push({ path: name + '.bin', bytes: saved.length, sha256: sha(saved) });
     await eventually(async () => assert.match(await page.locator('#resource-message').textContent(), /Downloaded/u));
+    assert.equal(await page.evaluate(() => document.activeElement.id), 'download-resource');
   };
   const shot = async (page, name) => {
     const path = join(evidence, name + '.png'); await page.screenshot({ path, fullPage: true, mask: [page.locator('#owner-key'), page.locator('#origin-config'), page.locator('#grant-share'), page.locator('#conversion-key')] });

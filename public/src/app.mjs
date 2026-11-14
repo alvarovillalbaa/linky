@@ -761,6 +761,7 @@ async function redeemGrant() {
       } }, 'Copy receipt ID'),
       el('a', { id: 'recipient-destination', className: 'button', href: destination.href, target: '_blank', rel: 'noopener noreferrer', referrerpolicy: 'no-referrer' }, 'Open destination'));
     $('recipient-result').hidden = false; $('recipient-redeem').textContent = 'Recover same redemption';
+    $('recipient-usage').textContent = 'Inspect again';
     if (!resourceAccess || resourceAccess.receipt.receiptId !== result.receiptId) resourceAccess = { receipt: result, inspection: null, intent: null, confirmed: false, message: '' };
     renderResourceAccess();
   } catch (error) { if (recipientKey === key && !disposed) { $('recipient-status').textContent = 'Redemption not confirmed'; $('recipient-message').textContent = messageFor(error) + ' Retry retains the same redemption identity.'; $('recipient-redeem').textContent = 'Retry same redemption'; } }
@@ -1027,7 +1028,7 @@ async function inspectResource(held) {
     if (value?.receiptId !== held.receipt.receiptId || value.resourceUrl !== held.receipt.destination || !Number.isSafeInteger(value.accessVersion) || value.accessVersion < 0) throw new ServiceError('response_invalid');
     held.inspection = value; held.message = 'Protected integration available. Preparing access uses this existing committed receipt.';
   } catch (error) { if (resourceAccess === held && recipientKey === key) held.message = messageFor(error) + ' No resource access is assumed.'; }
-  finally { if (recipientKey === key) { recipientBusy = false; renderResourceAccess(); } }
+  finally { if (recipientKey === key) { recipientBusy = false; renderResourceAccess(); $('prepare-resource')?.focus({ preventScroll: true }); } }
 }
 
 async function prepareResource(held) {
@@ -1040,7 +1041,7 @@ async function prepareResource(held) {
       || value.version !== intent.expectedAccessVersion + 1 || typeof value.replayed !== 'boolean') throw new ServiceError('response_invalid', { uncertain: true });
     held.confirmed = true; held.message = value.replayed ? 'The same resource key was recovered. Choose Download explicitly.' : 'Resource access committed. Choose Download explicitly.';
   } catch (error) { if (resourceAccess === held && recipientKey === key) held.message = messageFor(error) + ' Exact access ID, key and expected version were kept. Retry this same intent.'; }
-  finally { if (recipientKey === key) { recipientBusy = false; renderResourceAccess(); } }
+  finally { if (recipientKey === key) { recipientBusy = false; renderResourceAccess(); $(held.confirmed ? 'download-resource' : 'retry-resource')?.focus({ preventScroll: true }); } }
 }
 
 async function downloadResource(held) {
@@ -1051,7 +1052,7 @@ async function downloadResource(held) {
     if (resourceAccess !== held || recipientKey !== key || disposed) return;
     offerDownload(blob, 'linky-protected-resource.bin'); held.message = `Downloaded ${blob.size} bytes as an attachment. The host checked current access for this request.`;
   } catch (error) { if (resourceAccess === held && recipientKey === key) held.message = messageFor(error) + ' The resource key and receipt were kept; no successful download is claimed.'; }
-  finally { requests.delete(controller); if (recipientKey === key) { recipientBusy = false; renderResourceAccess(); } }
+  finally { requests.delete(controller); if (recipientKey === key) { recipientBusy = false; renderResourceAccess(); $('download-resource')?.focus({ preventScroll: true }); } }
 }
 
 function renderConversionTools() {
