@@ -42,6 +42,7 @@ jobs:
           node "$RUNNER_TEMP/linky-origin-tools/node_modules/playwright/cli.js" install --with-deps chromium
           echo "LINKY_PLAYWRIGHT_MODULE=$RUNNER_TEMP/linky-origin-tools/node_modules/playwright/index.mjs" >> "$GITHUB_ENV"
       - name: Generate the additive migration with pinned Supabase
+        if: hashFiles('supabase/migrations/*_linky_protected_resources.sql') == ''
         run: |
           npm view supabase@2.122.0 dist.integrity --json > "$RUNNER_TEMP/linky-origin-cli-integrity.json"
           node --input-type=module <<'NODE'
@@ -67,6 +68,24 @@ jobs:
           writeFileSync(path,readFileSync('docs/proposals/protected-resources.sql'));
           writeFileSync(process.env.GITHUB_ENV,'LINKY_V3_MIGRATION=' + path + '\n',{flag:'a'});
           mkdirSync(process.env.RUNNER_TEMP + '/linky-origin-evidence',{mode:0o700});
+          NODE
+      - name: Bind the already generated additive migration and its retained provenance
+        if: hashFiles('supabase/migrations/*_linky_protected_resources.sql') != ''
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import { readFileSync, writeFileSync, mkdirSync, readdirSync } from 'node:fs';
+          import { createHash } from 'node:crypto';
+          const hash=value=>createHash('sha256').update(value).digest('hex');
+          const receipt=readFileSync('docs/results/2026/11-14/origin-attempt-1/check-receipt.json');
+          assert.equal(hash(receipt),'00d7fcb289dfb4133572411a5a7852a05975024f00ad34349cbb11b7d3e469cc');
+          const prior=JSON.parse(receipt), name='20261114200848_linky_protected_resources.sql';
+          assert.equal(prior.generation.name,name); assert.equal(prior.generation.cli,'2.122.0'); assert.equal(prior.generation.scaffoldBytes,0);
+          const path=process.cwd()+'/supabase/migrations/'+name, bytes=readFileSync(path);
+          assert.equal(hash(bytes),prior.generation.populatedSha256); assert.deepEqual(bytes,readFileSync('docs/proposals/protected-resources.sql'));
+          writeFileSync(process.env.RUNNER_TEMP+'/linky-origin-generation.json',JSON.stringify({...prior.generation,sourceRun:43635816304},null,2));
+          writeFileSync(process.env.GITHUB_ENV,'LINKY_V3_MIGRATION='+path+'\n',{flag:'a'});
+          mkdirSync(process.env.RUNNER_TEMP+'/linky-origin-evidence',{mode:0o700});
           NODE
       - name: Prepare isolated HTTPS fixtures and disposable database marker
         run: |

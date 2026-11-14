@@ -88,7 +88,19 @@ try {
     assert.equal(receipt.generation.cli, '2.122.0');
     assert.equal(hash(await readFile(process.env.LINKY_V3_MIGRATION)), before.files.find(row => row.path === 'docs/proposals/protected-resources.sql').sha256);
     receipt.generation.populatedSha256 = hash(await readFile(process.env.LINKY_V3_MIGRATION));
-    await run('protected HTTP, capabilities, host guard and bounded download', ['--test', '--test-reporter=tap', 'tests/unit/protected-resources.test.mjs'], 60000);
+    const unitPath = 'docs/results/2026/11-14/origin-attempt-1/check-receipt.json';
+    const unitBytes = await readFile(unitPath), prior = JSON.parse(unitBytes);
+    assert.equal(hash(unitBytes), '00d7fcb289dfb4133572411a5a7852a05975024f00ad34349cbb11b7d3e469cc');
+    assert.equal(prior.node, process.version); assert.equal(prior.sourceUnchanged, true); assert.deepEqual(prior.before, prior.after);
+    const stablePaths = ['tests/unit/protected-resources.test.mjs','server/http.mjs','server/capabilities.mjs','server/errors.mjs','server/protected-resource.mjs','public/src/resource-client.mjs','public/src/server-client.mjs','public/src/destinations.mjs'];
+    for (const path of stablePaths) assert.deepEqual(before.files.find(row => row.path === path), prior.before.files.find(row => row.path === path));
+    const unit = prior.commands.find(row => row.name === 'protected HTTP, capabilities, host guard and bounded download');
+    assert(unit.code === 0 && unit.closeObserved && unit.groupGone && !unit.forcedGroupCleanup && !unit.timedOut && !unit.interrupted);
+    for (const stream of unit.streams) {
+      const decoded = inflateSync(Buffer.from(stream.zlibBase64, 'base64')); assert.equal(decoded.length, stream.bytes); assert.equal(hash(decoded), stream.sha256);
+      if (stream.stream === 'stdout') for (const [key, count] of [['tests',27],['pass',27],['fail',0],['cancelled',0],['skipped',0],['todo',0]]) assert(new RegExp(`^# ${key} ${count}$`,'m').test(decoded.toString('utf8')));
+    }
+    receipt.unitCarriedForward = { path: unitPath, sha256: hash(unitBytes), sourceHead: prior.before.head, stablePaths, passedCases: 27, repeatedCases: 0 };
     await run('additive migration, real PostgreSQL locks and access policy', ['--test', '--test-reporter=tap', 'tests/integration/protected-resources.test.mjs'], 120000);
     await run('protected resource desktop and narrow browser journeys', ['tests/browser/protected-resources.mjs'], 180000);
     const browser = JSON.parse(await readFile(process.env.RUNNER_TEMP + '/linky-origin-evidence/browser.json', 'utf8')); assert.equal(browser.passed, true);

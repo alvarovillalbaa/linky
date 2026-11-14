@@ -1,0 +1,29 @@
+{
+  "eligible": true,
+  "targets": [
+    {
+      "name": "node_modules",
+      "absent": true
+    },
+    {
+      "name": "linky-origin-tools",
+      "absent": true
+    },
+    {
+      "name": "linky-origin-browser-20261114",
+      "absent": true
+    },
+    {
+      "name": "linky-origin-generator",
+      "absent": true
+    },
+    {
+      "name": "linky-origin-ci.key",
+      "absent": true
+    },
+    {
+      "name": "linky-origin-ci.crt",
+      "absent": true
+    }
+  ]
+}

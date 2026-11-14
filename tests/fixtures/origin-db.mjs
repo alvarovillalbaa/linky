@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { generateCapability, hashCapability } from '../../server/capabilities.mjs';
+import { analyzeDestination } from '../../public/src/destinations.mjs';
 
 export const expectedUrl = 'postgresql://postgres:authored-ci-only@127.0.0.1:5432/linky_origin_checks';
 export function requireDisposable() {
@@ -27,8 +28,9 @@ export async function pools() {
     await operator.query('SELECT linky_private.operator_provision($1::uuid,$2::jsonb)', [randomUUID(), JSON.stringify({ workspaceId: w.id, mutationKey: randomUUID(), name: 'Authored protected resources', ownerHash: w.hash })]); return w;
   };
   const link = async (w, destination = 'https://resource.example.com/private.bin?scope=authored') => {
+    const checked = analyzeDestination(destination);
     const payload = { workspaceId: w.id, mutationKey: randomUUID(), linkId: randomUUID(), revisionId: randomUUID(), slug: 'v3_' + randomUUID(), label: 'Authored protected file', destination,
-      campaign: { source: 'authored', medium: 'origin-ci', campaign: 'resource-v3' }, safety: { policyVersion: 'linky-address-v1', hostname: new URL(destination).hostname, result: 'accepted', reputation: 'unchecked' } };
+      campaign: { source: 'authored', medium: 'origin-ci', campaign: 'resource-v3' }, safety: { policyVersion: 'linky-address-v1', hostname: checked.hostname, result: checked.findings.some(row => row.severity === 'review') ? 'review' : 'accepted', reputation: 'unchecked' } };
     return { ...await call('owner_create_link', w.hash, payload), payload };
   };
   const receipt = async (w, l, expiry = new Date(Date.now() + 120000).toISOString()) => {
