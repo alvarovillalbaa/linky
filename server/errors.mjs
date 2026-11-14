@@ -8,6 +8,8 @@ const databaseErrors = Object.freeze({
   linky_scope: ['scope_denied', 403], linky_expired: ['grant_expired', 410],
   linky_revoked: ['grant_revoked', 410], linky_exhausted: ['uses_exhausted', 409],
   linky_inactive: ['link_inactive', 409], linky_immutable: ['immutable', 409],
+  linky_resource_unavailable: ['protected_resource_unavailable', 409],
+  linky_origin_expired: ['origin_credential_expired', 410], linky_origin_revoked: ['origin_credential_revoked', 410],
 });
 export function publicError(error) {
   if (error instanceof LinkyError) return error;

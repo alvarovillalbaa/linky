@@ -1,7 +1,7 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { LinkyError } from './errors.mjs';
 
-const prefixes = Object.freeze({ owner: 'lyo_', recipient: 'lyr_', ingest: 'lyi_' });
+const prefixes = Object.freeze({ owner: 'lyo_', recipient: 'lyr_', ingest: 'lyi_', origin: 'lyp_', access: 'lya_' });
 export function generateCapability(purpose) {
   if (!Object.hasOwn(prefixes, purpose)) throw new LinkyError('invalid_capability_purpose');
   return prefixes[purpose] + randomBytes(32).toString('hex');
