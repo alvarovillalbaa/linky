@@ -101,7 +101,21 @@ try {
       if (stream.stream === 'stdout') for (const [key, count] of [['tests',27],['pass',27],['fail',0],['cancelled',0],['skipped',0],['todo',0]]) assert(new RegExp(`^# ${key} ${count}$`,'m').test(decoded.toString('utf8')));
     }
     receipt.unitCarriedForward = { path: unitPath, sha256: hash(unitBytes), sourceHead: prior.before.head, stablePaths, passedCases: 27, repeatedCases: 0 };
-    await run('additive migration, real PostgreSQL locks and access policy', ['--test', '--test-reporter=tap', 'tests/integration/protected-resources.test.mjs'], 120000);
+    const databasePath = 'docs/results/2026/11-14/origin-attempt-2/check-receipt.json';
+    const databaseBytes = await readFile(databasePath), priorDatabase = JSON.parse(databaseBytes);
+    assert.equal(hash(databaseBytes), '7b001f1bc74fd63328255b541862fea204599dc790f5acdb9c33794b973f8735');
+    assert.equal(priorDatabase.node, process.version); assert.equal(priorDatabase.sourceUnchanged, true); assert.deepEqual(priorDatabase.before, priorDatabase.after);
+    const databasePaths = ['tests/integration/protected-resources.test.mjs','tests/fixtures/origin-db.mjs','db/bootstrap.sql','server/postgres.mjs','server/http.mjs','server/capabilities.mjs','server/errors.mjs','public/src/destinations.mjs','docs/proposals/protected-resources.sql',
+      'supabase/migrations/20261105080045_linky_initial_service.sql','supabase/migrations/20261105092311_linky_service_extension.sql','supabase/migrations/20261114200848_linky_protected_resources.sql','package.json','package-lock.json'];
+    for (const path of databasePaths) assert.deepEqual(before.files.find(row => row.path === path), priorDatabase.before.files.find(row => row.path === path));
+    const database = priorDatabase.commands.find(row => row.name === 'additive migration, real PostgreSQL locks and access policy');
+    assert(database.code === 0 && database.closeObserved && database.groupGone && !database.forcedGroupCleanup && !database.timedOut && !database.interrupted);
+    for (const stream of database.streams) {
+      const decoded = inflateSync(Buffer.from(stream.zlibBase64, 'base64')); assert.equal(decoded.length, stream.bytes); assert.equal(hash(decoded), stream.sha256);
+      if (stream.stream === 'stdout') for (const [key, count] of [['tests',22],['pass',22],['fail',0],['cancelled',0],['skipped',0],['todo',0]]) assert(new RegExp(`^# ${key} ${count}$`,'m').test(decoded.toString('utf8')));
+    }
+    receipt.databaseCarriedForward = { path: databasePath, sha256: hash(databaseBytes), sourceHead: priorDatabase.before.head, stablePaths: databasePaths, postgresMajor: 17, passedCases: 22, repeatedCases: 0 };
+    await run('prepare fresh protected-resource database', ['scripts/setup-origin-disposable.mjs'], 60000);
     await run('protected resource desktop and narrow browser journeys', ['tests/browser/protected-resources.mjs'], 180000);
     const browser = JSON.parse(await readFile(process.env.RUNNER_TEMP + '/linky-origin-evidence/browser.json', 'utf8')); assert.equal(browser.passed, true);
     receipt.browser = browser;

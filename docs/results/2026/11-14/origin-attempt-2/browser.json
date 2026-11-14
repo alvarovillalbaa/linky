@@ -1,0 +1,37 @@
+{
+  "node": "v24.21.0",
+  "browserVersion": "156.0.8078.4",
+  "results": [],
+  "downloads": [],
+  "screenshots": [],
+  "pageErrors": [
+    {
+      "name": "TypeError",
+      "message": "Cannot read properties of null (reading 'after')",
+      "stack": "TypeError: Cannot read properties of null (reading 'after')\n    at installServiceUI (https://linky.example.com/src/app.mjs:404:24)\n    at https://linky.example.com/src/app.mjs:341:1"
+    }
+  ],
+  "unexpectedOrigins": [],
+  "lifecycle": {
+    "contextsCreated": 1,
+    "contextsClosed": 1,
+    "browserClosed": true,
+    "browserGroupGone": true,
+    "serverClosed": true,
+    "poolClosed": true,
+    "databaseClosed": true,
+    "scratchRemoved": true
+  },
+  "interrupted": null,
+  "failure": {
+    "name": "Error",
+    "message": "B01 owner host issue",
+    "stack": "Error: B01 owner host issue\n    at file:///home/runner/work/linky/linky/tests/browser/protected-resources.mjs:136:27",
+    "cause": {
+      "name": "AssertionError",
+      "message": "The input did not match the regular expression /Connected to/u. Input:\n\n'Use an operator-provisioned owner credential.'\n",
+      "stack": "AssertionError [ERR_ASSERTION]: The input did not match the regular expression /Connected to/u. Input:\n\n'Use an operator-provisioned owner credential.'\n\n    at file:///home/runner/work/linky/linky/tests/browser/protected-resources.mjs:78:41\n    at async eventually (file:///home/runner/work/linky/linky/tests/browser/protected-resources.mjs:20:92)\n    at async openOwner (file:///home/runner/work/linky/linky/tests/browser/protected-resources.mjs:78:5)\n    at async file:///home/runner/work/linky/linky/tests/browser/protected-resources.mjs:116:42"
+    }
+  },
+  "passed": false
+}

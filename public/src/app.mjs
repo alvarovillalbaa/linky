@@ -401,7 +401,6 @@ function installServiceUI() {
   recovery.after(el('section', { id: 'grant-recovery', className: 'panel' }));
   $('grant-recovery').after(el('section', { id: 'conversion-recovery', className: 'panel' }));
   $('conversion-recovery').after(el('section', { id: 'origin-recovery', className: 'panel' }));
-  $('recipient-result').after(el('section', { id: 'resource-access', className: 'panel', hidden: true, 'aria-label': 'Protected resource access' }));
   replace($('view-access'), el('div', { className: 'section-topline' }, el('div', {}, el('p', { className: 'eyebrow' }, 'CONTROL DISCLOSURE'),
     el('h2', {}, 'Make the handoff deliberate.'), el('p', { className: 'muted' }, 'Select a saved link to revise it, issue a finite grant, pause access or revoke a grant.'))),
     el('section', { id: 'link-detail', className: 'panel' }),
@@ -421,6 +420,7 @@ function installServiceUI() {
     el('div', { className: 'recipient-actions' }, el('button', { id: 'recipient-inspect', type: 'button', className: 'button button-secondary', onClick: inspectGrant }, 'Inspect access'),
       el('button', { id: 'recipient-redeem', type: 'button', className: 'button', onClick: redeemGrant }, 'Redeem access')),
     el('div', { id: 'recipient-result', hidden: true }), el('p', { className: 'field-help' }, 'Inspect first, then explicitly redeem. An uncertain reply is retried with the same redemption identity. Choose Open destination separately after confirmation.'));
+  $('recipient-result').after(el('section', { id: 'resource-access', className: 'panel', hidden: true, 'aria-label': 'Protected resource access' }));
   $('create-disabled-reason').nextElementSibling.id = 'create-shared';
   $('create-shared').addEventListener('click', createLink);
   const bulkSave = $('bulk-disabled-reason').nextElementSibling;
