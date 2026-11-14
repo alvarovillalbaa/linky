@@ -72,7 +72,8 @@ async function run(name, args, capMs) {
   }
   clearTimeout(kill);
   const streams = ['stdout', 'stderr'].map(stream => {
-    const raw = Buffer.concat(chunks.filter(x => x.stream === stream).map(x => x.data));
+    let raw = Buffer.concat(chunks.filter(x => x.stream === stream).map(x => x.data));
+    if (process.env.LINKY_CHECK_SUITE === 'protected-resources-v3') raw = Buffer.from(raw.toString('utf8').replace(/ly[oripa]_[0-9a-f]{64}/giu, '[disposable capability redacted]'));
     return { stream, bytes: raw.length, sha256: hash(raw), zlibBase64: deflateSync(raw).toString('base64') };
   });
   receipt.commands.push({ name, args, startedAt: new Date(started).toISOString(), elapsedMs: Date.now() - started, ...result, timedOut, groupGone, forcedGroupCleanup, closeObserved, interrupted, streams });
@@ -80,7 +81,19 @@ async function run(name, args, capMs) {
 }
 try {
   await run('source checks', ['scripts/check.mjs'], 60000);
-  if (process.env.LINKY_CHECK_SUITE === 'service-extension-v2') {
+  if (process.env.LINKY_CHECK_SUITE === 'protected-resources-v3') {
+    assert.equal(process.env.LINKY_DISPOSABLE_DB, 'linky-pg17-origin-v3');
+    receipt.suite = 'protected-resources-v3';
+    receipt.generation = JSON.parse(await readFile(process.env.RUNNER_TEMP + '/linky-origin-generation.json', 'utf8'));
+    assert.equal(receipt.generation.cli, '2.122.0');
+    assert.equal(hash(await readFile(process.env.LINKY_V3_MIGRATION)), before.files.find(row => row.path === 'docs/proposals/protected-resources.sql').sha256);
+    receipt.generation.populatedSha256 = hash(await readFile(process.env.LINKY_V3_MIGRATION));
+    await run('protected HTTP, capabilities, host guard and bounded download', ['--test', '--test-reporter=tap', 'tests/unit/protected-resources.test.mjs'], 60000);
+    await run('additive migration, real PostgreSQL locks and access policy', ['--test', '--test-reporter=tap', 'tests/integration/protected-resources.test.mjs'], 120000);
+    await run('protected resource desktop and narrow browser journeys', ['tests/browser/protected-resources.mjs'], 180000);
+    const browser = JSON.parse(await readFile(process.env.RUNNER_TEMP + '/linky-origin-evidence/browser.json', 'utf8')); assert.equal(browser.passed, true);
+    receipt.browser = browser;
+  } else if (process.env.LINKY_CHECK_SUITE === 'service-extension-v2') {
     assert.equal(process.env.LINKY_DISPOSABLE_DB, 'linky-pg17-extension-v2');
     assert.equal(before.files.find(x => x.path === 'supabase/migrations/20261105080045_linky_initial_service.sql')?.sha256, '406957876504aeb4c99a42f6488f24c325aaf9c2e41b8dc501f5c227b08249be');
     const path = 'docs/results/2026/11-05/service-attempt-1.json';
@@ -158,7 +171,7 @@ try {
     await run('unit and HTTP boundary checks', ['--test', '--test-reporter=tap', ...unit], 120000);
     await run('real PostgreSQL checks', ['--test', '--test-reporter=tap', 'tests/integration/database.test.mjs'], 180000);
   }
-  if (process.env.LINKY_CHECK_SUITE !== 'service-extension-v2') await run('desktop and narrow browser journeys', ['tests/browser/service.mjs'], 180000);
+  if (!['service-extension-v2','protected-resources-v3'].includes(process.env.LINKY_CHECK_SUITE)) await run('desktop and narrow browser journeys', ['tests/browser/service.mjs'], 180000);
   receipt.passed = true;
 } catch (error) { receipt.passed = false; receipt.failure = error.message; }
 try { receipt.after = await seal(); assert.deepEqual(receipt.after, before); receipt.sourceUnchanged = true; }
