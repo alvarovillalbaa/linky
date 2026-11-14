@@ -1,6 +1,7 @@
 import { normalizeLinkDraft, buildDestination, analyzeDestination, parseBulkCsv } from './destinations.mjs';
 import { el, replace, button, fieldError } from './ui.mjs';
 import { requestService, ServiceError, bodyByteLength, SERVICE_BODY_LIMIT } from './server-client.mjs';
+import { downloadProtectedResource } from './resource-client.mjs';
 
 const $ = id => document.getElementById(id);
 // Capture the bearer fragment before any asynchronous service work.
@@ -13,6 +14,8 @@ let configured = false, ownerKey = '', workspace = null, links = [], nextCursor 
 let selected = null, grants = [], grantNext = null, ownerBusy = false, ownerEpoch = 0;
 let pendingChange = null, grantRecovery = null, recipientBusy = false, inspected = null, redemptionKey = null;
 let conversionCredentials = null, conversionNext = null, conversionRecovery = null;
+let originCredentials = null, originNext = null, originRecovery = null, resourceAccess = null;
+const downloadURLs = new Set();
 let bulkJob = null, bulkSending = false, bulkStopRequested = false;
 let filter = 'all';
 const requests = new Set();
@@ -83,7 +86,7 @@ $('confirm-dialog').addEventListener('close', () => {
 });
 
 function hasDraft() { return fields.some(key => draft[key].length > 0); }
-const hasCapability = value => typeof value === 'string' && /ly[ori]_[0-9a-f]{64}/u.test(value);
+const hasCapability = value => typeof value === 'string' && /ly[oripa]_[0-9a-f]{64}/u.test(value);
 const uncertainBulk = () => Boolean(bulkJob?.pendingBatch);
 const utcExpiry = value => /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/.test(value)
   && Number.isFinite(Date.parse(value)) && new Date(value).toISOString() === value && Date.parse(value) > Date.now();
@@ -327,7 +330,7 @@ $('registry-search').addEventListener('input', () => {
 
 window.addEventListener('hashchange', () => { if (!recipientPath) navigate(location.hash.slice(1)); });
 window.addEventListener('beforeunload', event => {
-  if (hasDraft() || $('bulk-source').value.length || pendingChange || grantRecovery || conversionRecovery || bulkJob) { event.preventDefault(); event.returnValue = ''; }
+  if (hasDraft() || $('bulk-source').value.length || pendingChange || grantRecovery || conversionRecovery || originRecovery || resourceAccess?.intent || bulkJob) { event.preventDefault(); event.returnValue = ''; }
 });
 window.addEventListener('pagehide', event => {
   cancelFileRead();
@@ -362,6 +365,10 @@ function messageFor(error) {
     uses_exhausted: 'No uses remain for this grant.', link_inactive: 'This link is paused or blocked.',
     backend_unconfigured: 'The shared service is not configured. Shared actions are unavailable.',
     invalid_request: 'Check the reviewed fields and current record version. This request was refused.',
+    protected_resource_unavailable: 'No active protected-resource integration is available for this receipt.',
+    origin_credential_expired: 'The host integration credential has expired.', origin_credential_revoked: 'The host integration credential was revoked.',
+    resource_refused: 'The resource host refused this download.', resource_unavailable: 'The resource host could not complete the download.',
+    resource_too_large: 'This file exceeds the browser download limit of 20 MiB.', resource_timeout: 'The download exceeded 10 seconds.',
   };
   return messages[error?.code] ?? 'The service could not confirm this action. No result is assumed.';
 }
@@ -393,6 +400,8 @@ function installServiceUI() {
   $('owner-connection').after(recovery);
   recovery.after(el('section', { id: 'grant-recovery', className: 'panel' }));
   $('grant-recovery').after(el('section', { id: 'conversion-recovery', className: 'panel' }));
+  $('conversion-recovery').after(el('section', { id: 'origin-recovery', className: 'panel' }));
+  $('recipient-result').after(el('section', { id: 'resource-access', className: 'panel', hidden: true, 'aria-label': 'Protected resource access' }));
   replace($('view-access'), el('div', { className: 'section-topline' }, el('div', {}, el('p', { className: 'eyebrow' }, 'CONTROL DISCLOSURE'),
     el('h2', {}, 'Make the handoff deliberate.'), el('p', { className: 'muted' }, 'Select a saved link to revise it, issue a finite grant, pause access or revoke a grant.'))),
     el('section', { id: 'link-detail', className: 'panel' }),
@@ -447,6 +456,8 @@ function updateControls() {
   if ($('copy-grant')) $('copy-grant').disabled = ownerBusy || !grantRecovery?.confirmed;
   if ($('save-revision')) $('save-revision').disabled = !ready || locked || !$('save-revision').dataset.reviewed;
   if ($('copy-conversion-key')) $('copy-conversion-key').disabled = ownerBusy || !conversionRecovery?.confirmed;
+  if ($('origin-config')) $('origin-config').disabled = false;
+  if ($('download-origin-config')) $('download-origin-config').disabled = ownerBusy || !originRecovery?.confirmed;
   $('bulk-save-reviewed').disabled = !ready || locked || Boolean(bulkJob) || !bulk?.validCount;
   $('bulk-source').disabled = Boolean(bulkJob);
   $('choose-csv').disabled = Boolean(bulkJob);
@@ -459,6 +470,8 @@ function updateControls() {
   $('bulk-resume').disabled = !ready || ownerBusy || Boolean(pendingChange);
   $('recipient-inspect').disabled = !configured || !recipientKey || recipientBusy;
   $('recipient-redeem').disabled = !configured || !recipientKey || !inspected || recipientBusy;
+  for (const control of $('resource-access')?.querySelectorAll('button') ?? []) control.disabled = !configured || !recipientKey || recipientBusy;
+  if ($('inspect-resource') && resourceAccess?.intent) $('inspect-resource').disabled = true;
   $('owner-connection').setAttribute('aria-busy', String(ownerBusy));
 }
 
@@ -484,6 +497,8 @@ function clearCredentials() {
   cancelFileRead();
   ownerKey = ''; recipientKey = ''; workspace = null; links = []; selected = null; grants = [];
   conversionCredentials = null; conversionNext = null; conversionRecovery = null;
+  originCredentials = null; originNext = null; originRecovery = null; resourceAccess = null;
+  for (const url of downloadURLs) URL.revokeObjectURL(url); downloadURLs.clear();
   bulkJob = null; bulkSending = false; bulkStopRequested = false; bulk = null; bulkRevision++;
   $('bulk-source').value = ''; replace($('bulk-result')); renderBulkProgress();
   nextCursor = null; grantNext = null; pendingChange = null; grantRecovery = null; inspected = null; redemptionKey = null; ownerBusy = false;
@@ -493,11 +508,11 @@ function clearCredentials() {
   replace($('report-content'), el('div', { className: 'empty-inline' }, el('h3', {}, 'No report requested.')));
   $('recipient-status').textContent = 'Credential cleared'; $('recipient-message').textContent = 'Reopen the original grant link to continue.';
   for (const id of ['recipient-host', 'recipient-expiry', 'recipient-usage']) $(id).textContent = 'Not checked';
-  renderRegistry(); renderSelected(); renderShareRecovery(); renderConversionRecovery(); updateControls();
+  renderRegistry(); renderSelected(); renderShareRecovery(); renderConversionRecovery(); renderOriginRecovery(); renderResourceAccess(); updateControls();
 }
 
 async function disconnect() {
-  if ((pendingChange || grantRecovery || conversionRecovery || bulkJob || $('bulk-source').value) && !await confirmChange('Disconnect and clear private recovery?', 'Keys, CSV source and unconfirmed row identities exist only in this tab. Disconnecting clears them; it cannot undo a committed service action. Recover an uncertain reply first.', 'Disconnect')) return;
+  if ((pendingChange || grantRecovery || conversionRecovery || originRecovery || resourceAccess?.intent || bulkJob || $('bulk-source').value) && !await confirmChange('Disconnect and clear private recovery?', 'Keys, CSV source and unconfirmed row identities exist only in this tab. Disconnecting clears them; it cannot undo a committed service action. Recover an uncertain reply first.', 'Disconnect')) return;
   clearCredentials();
 }
 
@@ -553,8 +568,9 @@ function renderRegistry() {
 
 async function selectLink(row) {
   if (!workspace || ownerBusy || pendingChange || uncertainBulk()) return;
-  if ((grantRecovery || conversionRecovery) && selected?.id !== row.id && !await confirmChange('Leave private recovery?', 'Copy private keys first. They cannot be recovered from the server.', 'Leave share')) return;
+  if ((grantRecovery || conversionRecovery || originRecovery) && selected?.id !== row.id && !await confirmChange('Leave private recovery?', 'Copy private keys first. They cannot be recovered from the server.', 'Leave share')) return;
   const epoch = ownerEpoch; selected = row; grants = []; grantRecovery = null; conversionCredentials = null; conversionRecovery = null; ownerBusy = true;
+  originCredentials = null; originNext = null; originRecovery = null; renderOriginRecovery();
   renderShareRecovery(); renderConversionRecovery();
   navigate('access'); renderSelected(); updateControls();
   try { await loadGrants(); if (epoch === ownerEpoch) renderSelected(); }
@@ -570,6 +586,7 @@ async function loadGrants() {
   if (!Array.isArray(result?.grants) || result.grants.length > 50) throw new ServiceError('response_invalid');
   grants = result.grants; grantNext = result.nextCursor ?? null;
   await loadConversionCredentials(held, epoch);
+  await loadOriginCredentials(held, epoch);
 }
 
 function createLink() {
@@ -600,7 +617,11 @@ async function runPendingChange() {
       || (held.body.revisionId && acknowledgment.revisionId !== held.body.revisionId)) throw new ServiceError('response_invalid', { uncertain: true });
     if (grantRecovery && held.path === '/grants/issue') grantRecovery.confirmed = true;
     if (conversionRecovery && held.path === '/conversion-credentials/issue') conversionRecovery.confirmed = true;
-    renderShareRecovery(); renderConversionRecovery();
+    if (originRecovery && held.path === '/origin-credentials/issue') {
+      if (acknowledgment.resourceUrl !== originRecovery.resourceUrl) throw new ServiceError('response_invalid', { uncertain: true });
+      originRecovery.confirmed = true;
+    }
+    renderShareRecovery(); renderConversionRecovery(); renderOriginRecovery();
     pendingChange = null; notice(`${held.label} confirmed by the service.`);
     if ($('composer-dialog').open && held.path === '/links/create') $('composer-dialog').close();
     await loadLinks();
@@ -613,6 +634,7 @@ async function runPendingChange() {
       notice(pendingChange === held ? messageFor(error) : 'The change was committed, but the refreshed list could not be loaded. Use Refresh workspace; do not create a replacement change.', true);
       renderShareRecovery();
       renderConversionRecovery();
+      renderOriginRecovery();
     }
   } finally { if (epoch === ownerEpoch) { ownerBusy = false; updateControls(); } }
 }
@@ -683,7 +705,7 @@ function renderSelected() {
         if (selected !== held || ownerBusy || pendingChange) return;
         queueChange('Revoke recipient grant', '/grants/revoke', { workspaceId: workspace.id, mutationKey: crypto.randomUUID(), linkId: held.id, grantId: grant.id, expectedVersion: held.version });
       }, 'button button-secondary')))));
-  renderConversionTools(); renderShareRecovery(); renderConversionRecovery(); updateControls();
+  renderConversionTools(); renderOriginTools(); renderShareRecovery(); renderConversionRecovery(); renderOriginRecovery(); updateControls();
 }
 
 function renderShareRecovery() {
@@ -739,6 +761,8 @@ async function redeemGrant() {
       } }, 'Copy receipt ID'),
       el('a', { id: 'recipient-destination', className: 'button', href: destination.href, target: '_blank', rel: 'noopener noreferrer', referrerpolicy: 'no-referrer' }, 'Open destination'));
     $('recipient-result').hidden = false; $('recipient-redeem').textContent = 'Recover same redemption';
+    if (!resourceAccess || resourceAccess.receipt.receiptId !== result.receiptId) resourceAccess = { receipt: result, inspection: null, intent: null, confirmed: false, message: '' };
+    renderResourceAccess();
   } catch (error) { if (recipientKey === key && !disposed) { $('recipient-status').textContent = 'Redemption not confirmed'; $('recipient-message').textContent = messageFor(error) + ' Retry retains the same redemption identity.'; $('recipient-redeem').textContent = 'Retry same redemption'; } }
   finally { recipientBusy = false; updateControls(); }
 }
@@ -877,6 +901,157 @@ async function loadConversionCredentials(held, epoch) {
   } catch {
     if (selected === held && ownerEpoch === epoch && !disposed) { conversionCredentials = null; conversionNext = null; }
   }
+}
+
+async function loadOriginCredentials(held, epoch) {
+  try {
+    const value = await api('/origin-credentials/list', { workspaceId: workspace.id, linkId: held.id, limit: 50, after: null });
+    if (selected !== held || ownerEpoch !== epoch || disposed) return;
+    if (!Array.isArray(value?.credentials) || value.credentials.length > 50 || value.credentials.some(row => row.purpose !== 'resource_authorize' || row.linkId !== held.id)) throw new ServiceError('response_invalid');
+    originCredentials = value.credentials; originNext = value.nextCursor ?? null;
+  } catch { if (selected === held && ownerEpoch === epoch && !disposed) { originCredentials = null; originNext = null; } }
+}
+
+function randomCapability(prefix) {
+  return prefix + Array.from(crypto.getRandomValues(new Uint8Array(32)), value => value.toString(16).padStart(2, '0')).join('');
+}
+
+function offerDownload(blob, filename) {
+  const url = URL.createObjectURL(blob); downloadURLs.add(url);
+  const link = el('a', { href: url, download: filename, hidden: true });
+  document.body.append(link); link.click(); link.remove();
+  setTimeout(() => { URL.revokeObjectURL(url); downloadURLs.delete(url); }, 30_000);
+}
+
+function renderOriginTools() {
+  if (!selected || !workspace) return;
+  const held = selected, target = new URL(held.destination), eligible = target.protocol === 'https:' && !target.hash;
+  const form = el('form', { id: 'origin-form', className: 'service-form' }, el('h3', {}, 'Protect a resource on your server'),
+    el('p', { className: 'field-help' }, 'Your server must enforce the Linky guard before serving private bytes at this exact destination revision. A host key alone does not install protection. Uses count committed redemptions, not downloads.'),
+    el('p', {}, eligible ? 'HTTPS resource: ' + target.href : 'This revision needs HTTPS without a fragment before it can have a protected-resource integration.'),
+    el('label', { for: 'origin-label' }, 'Host credential label'), el('input', { id: 'origin-label', maxlength: 200, required: true }),
+    el('label', { for: 'origin-expiry' }, 'Host credential expires at (UTC)'), el('input', { id: 'origin-expiry', maxlength: 24, required: true }),
+    el('button', { id: 'issue-origin', className: 'button', type: 'submit' }, 'Issue host credential'),
+    el('p', { id: 'origin-message', className: 'field-help', role: 'status' }));
+  form.querySelector('#origin-expiry').value = new Date(Date.now() + 86_400_000).toISOString();
+  form.addEventListener('submit', event => {
+    event.preventDefault(); if (selected !== held || ownerBusy || pendingChange || uncertainBulk()) return;
+    if (!eligible) { localMessage('origin-message', 'Save an HTTPS destination revision without a fragment first.', true); return; }
+    if (originRecovery) { localMessage('origin-message', 'Keep the current private configuration before explicitly clearing it.', true); return; }
+    const label = $('origin-label').value.trim(), expiresAt = $('origin-expiry').value.trim();
+    if (!label || hasCapability(label) || !utcExpiry(expiresAt)) { localMessage('origin-message', 'Use a label without credentials and a future canonical UTC expiry.', true); return; }
+    const body = { workspaceId: workspace.id, mutationKey: crypto.randomUUID(), linkId: held.id, revisionId: held.currentRevisionId, expectedVersion: held.version,
+      credentialId: crypto.randomUUID(), originKey: randomCapability('lyp_'), label, expiresAt };
+    originRecovery = { body, resourceUrl: held.destination, confirmed: false }; renderOriginRecovery();
+    queueChange('Issue host credential', '/origin-credentials/issue', body);
+  });
+  const listing = el('section', { 'aria-label': 'Host credentials' }, el('h3', {}, 'Host credentials'),
+    el('p', { className: 'field-help' }, originCredentials === null ? 'Host credential list unavailable. No integration or protection is assumed.' : `${originCredentials.length} records in this bounded page${originNext ? '; more exist' : ''}. Keys stay on the resource server.`),
+    ...(originCredentials ?? []).map(row => el('article', { className: 'grant-row' }, el('div', {}, el('strong', {}, row.label),
+      el('p', {}, `Expires ${row.expiresAt} · ${row.revokedAt ? 'revoked' : 'not revoked'}`), el('p', { className: 'row-url' }, row.resourceUrl), el('code', {}, row.id)),
+    row.revokedAt ? null : button('Revoke host ' + row.label, async () => {
+      if (selected !== held || ownerBusy || pendingChange || !await confirmChange('Revoke this host credential?', 'Requests through this key will be denied after revocation commits. Downloaded copies and already authorized streams cannot be recalled.', 'Revoke host credential')) return;
+      if (selected !== held || ownerBusy || pendingChange) return;
+      queueChange('Revoke host credential', '/origin-credentials/revoke', { workspaceId: workspace.id, mutationKey: crypto.randomUUID(), linkId: held.id, credentialId: row.id, expectedVersion: held.version });
+    }, 'button button-secondary'))));
+  $('link-detail').append(el('section', { className: 'conversion-tools' }, form, listing));
+}
+
+function renderOriginRecovery() {
+  const node = $('origin-recovery'); if (!node) return;
+  if (!originRecovery) { replace(node); return; }
+  const held = originRecovery;
+  const config = JSON.stringify({ linkyOrigin: location.origin, credentialId: held.body.credentialId, originKey: held.body.originKey, resourceUrl: held.resourceUrl }, null, 2);
+  const input = el('textarea', { id: 'origin-config', readonly: true, rows: 7, spellcheck: 'false', 'aria-label': 'Private host configuration' }); input.value = config;
+  const download = button('Download private host configuration', () => {
+    if (originRecovery !== held || !held.confirmed) return;
+    offerDownload(new Blob([config + '\n'], { type: 'application/json' }), 'linky-private-host-config.json');
+    notice('Private configuration downloaded by your choice. Keep it in the host secret manager; never publish it.');
+  }, 'button button-secondary'); download.id = 'download-origin-config';
+  replace(node, el('h3', {}, held.confirmed ? 'Private host configuration ready' : 'Host issue not yet confirmed'),
+    el('p', {}, 'Keep this tab open until the issue is confirmed. This secret cannot be returned by the service. Downloading is an explicit private export; clearing this tab does not revoke the key.'), input, download,
+    held.confirmed ? button('Clear private host configuration', async () => {
+      if (originRecovery !== held || !await confirmChange('Clear the private host configuration?', 'Keep your private server copy first. The issued host credential remains active until revoked or expired.', 'Clear private configuration')) return;
+      if (originRecovery === held) { originRecovery = null; renderOriginRecovery(); }
+    }, 'quiet') : null,
+    el('p', {}, 'Install server/protected-resource.mjs in the destination server, wrap every route to these bytes, and remove public/static/cache bypasses. See the protected-origin example in the source repository. No file is uploaded or host configured by this page.'));
+  updateControls();
+}
+
+function renderResourceAccess() {
+  const node = $('resource-access'); if (!node) return;
+  node.hidden = !resourceAccess;
+  if (!resourceAccess) { replace(node); return; }
+  const held = resourceAccess;
+  const inspect = button('Check protected resource', () => inspectResource(held), 'button button-secondary'); inspect.id = 'inspect-resource';
+  const controls = [inspect];
+  if (held.inspection && !held.intent) {
+    const prepare = button(held.inspection.accessVersion ? 'Replace resource access key' : 'Prepare resource access', async () => {
+      if (resourceAccess !== held || recipientBusy) return;
+      if (held.inspection.accessVersion && !await confirmChange('Replace the current resource access key?', 'The previous resource key will stop working when this replacement commits. The redemption use count stays unchanged.', 'Replace resource access')) return;
+      if (resourceAccess !== held || recipientBusy || held.intent) return;
+      held.intent = { grantId: recipientGrantId, recipientKey, receiptId: held.receipt.receiptId, accessId: crypto.randomUUID(), accessKey: randomCapability('lya_'), expectedAccessVersion: held.inspection.accessVersion };
+      held.confirmed = false; renderResourceAccess(); await prepareResource(held);
+    }, 'button'); prepare.id = 'prepare-resource'; controls.push(prepare);
+  }
+  if (held.intent && !held.confirmed) {
+    const retry = button('Retry same resource access', () => prepareResource(held), 'button'); retry.id = 'retry-resource'; controls.push(retry);
+    controls.push(button('Discard unconfirmed resource intent', async () => {
+      if (resourceAccess !== held || recipientBusy || !await confirmChange('Discard the unconfirmed resource key?', 'This cannot undo a possible committed key. Check the current version and explicitly replace access afterward; the previous key may remain active until replacement, revocation or expiry.', 'Discard private intent')) return;
+      if (resourceAccess === held && !recipientBusy) { held.intent = null; held.inspection = null; held.message = 'Private intent cleared. Check the current version before preparing replacement access.'; renderResourceAccess(); }
+    }));
+  }
+  if (held.intent && held.confirmed) {
+    const download = button('Download protected resource', () => downloadResource(held), 'button'); download.id = 'download-resource'; controls.push(download);
+    const clear = button('Clear resource key from tab', async () => {
+      if (resourceAccess !== held || recipientBusy || !await confirmChange('Clear this resource key?', 'The key is not recoverable. You can check and explicitly replace it using this original grant. Clearing the tab does not revoke the grant.', 'Clear resource key')) return;
+      if (resourceAccess === held && !recipientBusy) { held.intent = null; held.confirmed = false; held.inspection = null; renderResourceAccess(); }
+    }); controls.push(clear);
+  }
+  replace(node, el('h3', {}, 'Download from a protected host'),
+    el('p', {}, 'A host must install Linky’s guard to protect its private file. This does not protect an ordinary public destination. Repeated downloads do not consume another redemption use.'),
+    held.inspection ? el('p', { id: 'resource-target', className: 'row-url' }, 'Resource host: ' + new URL(held.inspection.resourceUrl).hostname + ' · ' + held.inspection.resourceUrl) : null,
+    el('p', {}, 'Downloads omit cookies and send only the separate resource key to this host. Maximum 20 MiB within 10 seconds; downloaded copies cannot be recalled.'),
+    el('div', { className: 'form-actions' }, controls), el('p', { id: 'resource-message', className: 'field-help', role: 'status', 'aria-live': 'polite' }, held.message));
+  // Never discard an uncertain key by checking again; first retry its exact intent.
+  inspect.disabled = recipientBusy || Boolean(held.intent);
+  updateControls(); if (held.intent) inspect.disabled = true;
+}
+
+async function inspectResource(held) {
+  if (resourceAccess !== held || !recipientKey || recipientBusy || held.intent) return;
+  const key = recipientKey; recipientBusy = true; updateControls();
+  try {
+    const value = await api('/recipient/resource-inspect', { grantId: recipientGrantId, recipientKey: key, receiptId: held.receipt.receiptId }, '');
+    if (resourceAccess !== held || recipientKey !== key || disposed) return;
+    if (value?.receiptId !== held.receipt.receiptId || value.resourceUrl !== held.receipt.destination || !Number.isSafeInteger(value.accessVersion) || value.accessVersion < 0) throw new ServiceError('response_invalid');
+    held.inspection = value; held.message = 'Protected integration available. Preparing access uses this existing committed receipt.';
+  } catch (error) { if (resourceAccess === held && recipientKey === key) held.message = messageFor(error) + ' No resource access is assumed.'; }
+  finally { if (recipientKey === key) { recipientBusy = false; renderResourceAccess(); } }
+}
+
+async function prepareResource(held) {
+  if (resourceAccess !== held || !recipientKey || recipientBusy || !held.intent || held.confirmed) return;
+  const key = recipientKey, intent = held.intent; recipientBusy = true; updateControls();
+  try {
+    const value = await api('/recipient/resource-prepare', intent, '');
+    if (resourceAccess !== held || held.intent !== intent || recipientKey !== key || disposed) return;
+    if (value?.accessId !== intent.accessId || value.receiptId !== intent.receiptId || value.resourceUrl !== held.inspection.resourceUrl
+      || value.version !== intent.expectedAccessVersion + 1 || typeof value.replayed !== 'boolean') throw new ServiceError('response_invalid', { uncertain: true });
+    held.confirmed = true; held.message = value.replayed ? 'The same resource key was recovered. Choose Download explicitly.' : 'Resource access committed. Choose Download explicitly.';
+  } catch (error) { if (resourceAccess === held && recipientKey === key) held.message = messageFor(error) + ' Exact access ID, key and expected version were kept. Retry this same intent.'; }
+  finally { if (recipientKey === key) { recipientBusy = false; renderResourceAccess(); } }
+}
+
+async function downloadResource(held) {
+  if (resourceAccess !== held || !held.confirmed || !held.intent || recipientBusy) return;
+  const key = recipientKey, controller = new AbortController(); requests.add(controller); recipientBusy = true; updateControls();
+  try {
+    const blob = await downloadProtectedResource({ resourceUrl: held.inspection.resourceUrl, accessId: held.intent.accessId, accessKey: held.intent.accessKey, signal: controller.signal });
+    if (resourceAccess !== held || recipientKey !== key || disposed) return;
+    offerDownload(blob, 'linky-protected-resource.bin'); held.message = `Downloaded ${blob.size} bytes as an attachment. The host checked current access for this request.`;
+  } catch (error) { if (resourceAccess === held && recipientKey === key) held.message = messageFor(error) + ' The resource key and receipt were kept; no successful download is claimed.'; }
+  finally { requests.delete(controller); if (recipientKey === key) { recipientBusy = false; renderResourceAccess(); } }
 }
 
 function renderConversionTools() {
