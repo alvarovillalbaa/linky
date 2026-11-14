@@ -1,0 +1,100 @@
+{
+  "node": "v24.21.0",
+  "browserVersion": "156.0.8078.4",
+  "results": [
+    {
+      "id": "B01",
+      "passed": true,
+      "purpose": "desktop host export, real downloads, GET/HEAD accounting and learned URL denied after grant revoke"
+    },
+    {
+      "id": "B02",
+      "passed": true,
+      "purpose": "narrow owner and recipient lost-reply retries retain exact key, body, ID and version"
+    },
+    {
+      "id": "B03",
+      "passed": true,
+      "purpose": "explicit replacement invalidates prior access and paused links deny the known resource"
+    },
+    {
+      "id": "B04",
+      "passed": true,
+      "purpose": "narrow host revocation and real wall-clock expiry deny repeated access without a new use"
+    }
+  ],
+  "downloads": [
+    {
+      "path": "B01-first.bin",
+      "bytes": 80,
+      "sha256": "7ae07e0b83e719717eb613fc162da98f713cd66db9f2be9286b06f0b7766aef7"
+    },
+    {
+      "path": "B01-repeat.bin",
+      "bytes": 80,
+      "sha256": "7ae07e0b83e719717eb613fc162da98f713cd66db9f2be9286b06f0b7766aef7"
+    },
+    {
+      "path": "B02-recovered.bin",
+      "bytes": 80,
+      "sha256": "7ae07e0b83e719717eb613fc162da98f713cd66db9f2be9286b06f0b7766aef7"
+    },
+    {
+      "path": "B03-original.bin",
+      "bytes": 80,
+      "sha256": "7ae07e0b83e719717eb613fc162da98f713cd66db9f2be9286b06f0b7766aef7"
+    },
+    {
+      "path": "B03-replacement.bin",
+      "bytes": 80,
+      "sha256": "7ae07e0b83e719717eb613fc162da98f713cd66db9f2be9286b06f0b7766aef7"
+    },
+    {
+      "path": "B04-initial.bin",
+      "bytes": 80,
+      "sha256": "7ae07e0b83e719717eb613fc162da98f713cd66db9f2be9286b06f0b7766aef7"
+    },
+    {
+      "path": "B04-before-expiry.bin",
+      "bytes": 80,
+      "sha256": "7ae07e0b83e719717eb613fc162da98f713cd66db9f2be9286b06f0b7766aef7"
+    }
+  ],
+  "screenshots": [
+    {
+      "path": "B01-desktop-revoked.png",
+      "bytes": 130395,
+      "sha256": "d8ab78baa25e1181c86db3303f82991d8c58759ac5186f1afc117f55354ece12"
+    },
+    {
+      "path": "B02-narrow-recovered.png",
+      "bytes": 118585,
+      "sha256": "6fe9f92dcfc4b0894ef3b848d8c79651b23f0bc394777e149144a00927d26a00"
+    },
+    {
+      "path": "B03-desktop-paused.png",
+      "bytes": 129999,
+      "sha256": "fac70a7700ef519b0316cd689a132f09e56a862da3956da7bda5be77909174c0"
+    },
+    {
+      "path": "B04-narrow-expired.png",
+      "bytes": 119761,
+      "sha256": "a3d4e1ab7e5b34ed159826d33092db50bddfcc08db1b9362328060c8cfe7a589"
+    }
+  ],
+  "pageErrors": [],
+  "unexpectedOrigins": [],
+  "lifecycle": {
+    "contextsCreated": 7,
+    "contextsClosed": 7,
+    "browserClosed": true,
+    "browserGroupGone": true,
+    "serverClosed": true,
+    "poolClosed": true,
+    "databaseClosed": true,
+    "scratchRemoved": true
+  },
+  "interrupted": null,
+  "failure": null,
+  "passed": true
+}

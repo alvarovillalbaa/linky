@@ -3,6 +3,14 @@
 5 November 2026. This describes source; dated results own actual acceptance
 and hosting evidence. Source alone establishes neither.
 
+14 November additive scope: the [protected-resource contract](proposals/protected-resources.md)
+adds two private tables and six named runtime functions, a separately purposed
+host/access-key pair, and a streaming Request/Response guard. Resource requests
+check current locked grant/link/workspace/host state and consume no new use.
+The browser offers explicit inert downloads and exact pending-key retries.
+[Acceptance](results/2026/11-14/protected-resources.md) covers disposable origins;
+the live project is inactive and no downstream host has been installed.
+
 The browser keeps credentials and pending write identities in tab memory.
 Shared operations use same-origin bounded JSON POST without ambient cookies
 or automatic write retries. An explicit retry retains its original identity.

@@ -1,0 +1,100 @@
+{
+  "node": "v24.21.0",
+  "browserVersion": "156.0.8078.4",
+  "results": [
+    {
+      "id": "B01",
+      "passed": true,
+      "purpose": "desktop host export, real downloads, GET/HEAD accounting and learned URL denied after grant revoke"
+    },
+    {
+      "id": "B02",
+      "passed": true,
+      "purpose": "narrow owner and recipient lost-reply retries retain exact key, body, ID and version"
+    },
+    {
+      "id": "B03",
+      "passed": true,
+      "purpose": "explicit replacement invalidates prior access and paused links deny the known resource"
+    },
+    {
+      "id": "B04",
+      "passed": true,
+      "purpose": "narrow host revocation and real wall-clock expiry deny repeated access without a new use"
+    }
+  ],
+  "downloads": [
+    {
+      "path": "B01-first.bin",
+      "bytes": 80,
+      "sha256": "7ae07e0b83e719717eb613fc162da98f713cd66db9f2be9286b06f0b7766aef7"
+    },
+    {
+      "path": "B01-repeat.bin",
+      "bytes": 80,
+      "sha256": "7ae07e0b83e719717eb613fc162da98f713cd66db9f2be9286b06f0b7766aef7"
+    },
+    {
+      "path": "B02-recovered.bin",
+      "bytes": 80,
+      "sha256": "7ae07e0b83e719717eb613fc162da98f713cd66db9f2be9286b06f0b7766aef7"
+    },
+    {
+      "path": "B03-original.bin",
+      "bytes": 80,
+      "sha256": "7ae07e0b83e719717eb613fc162da98f713cd66db9f2be9286b06f0b7766aef7"
+    },
+    {
+      "path": "B03-replacement.bin",
+      "bytes": 80,
+      "sha256": "7ae07e0b83e719717eb613fc162da98f713cd66db9f2be9286b06f0b7766aef7"
+    },
+    {
+      "path": "B04-initial.bin",
+      "bytes": 80,
+      "sha256": "7ae07e0b83e719717eb613fc162da98f713cd66db9f2be9286b06f0b7766aef7"
+    },
+    {
+      "path": "B04-before-expiry.bin",
+      "bytes": 80,
+      "sha256": "7ae07e0b83e719717eb613fc162da98f713cd66db9f2be9286b06f0b7766aef7"
+    }
+  ],
+  "screenshots": [
+    {
+      "path": "B01-desktop-revoked.png",
+      "bytes": 131260,
+      "sha256": "7fc5ef22527daa187100f015283fb4efc35adb88342d93eae215205900d2bcd5"
+    },
+    {
+      "path": "B02-narrow-recovered.png",
+      "bytes": 120058,
+      "sha256": "4af236531788e8a62143e99be0fffeb6ca7bd8e06600b0310fc64fc9d6b8243f"
+    },
+    {
+      "path": "B03-desktop-paused.png",
+      "bytes": 131137,
+      "sha256": "8cb8d42e517a2b2b235b073df8c002e2fc5ead6fde6ab41adf6aa2f4f1f26132"
+    },
+    {
+      "path": "B04-narrow-expired.png",
+      "bytes": 121060,
+      "sha256": "6dd377adfa0a193ef9ee56518d6eb8fee53ca49d43f07d21d8bd7a56d162b2c8"
+    }
+  ],
+  "pageErrors": [],
+  "unexpectedOrigins": [],
+  "lifecycle": {
+    "contextsCreated": 7,
+    "contextsClosed": 7,
+    "browserClosed": true,
+    "browserGroupGone": true,
+    "serverClosed": true,
+    "poolClosed": true,
+    "databaseClosed": true,
+    "scratchRemoved": true
+  },
+  "interrupted": null,
+  "failure": null,
+  "passed": true
+}

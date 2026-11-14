@@ -16,7 +16,7 @@ async function inspect(directory) {
     }
   }
 }
-for (const path of ['public/src/', 'tests/', 'scripts/', 'server/', 'api/']) await inspect(new URL(path, root));
+for (const path of ['public/src/', 'tests/', 'scripts/', 'server/', 'api/', 'examples/']) await inspect(new URL(path, root));
 const manifest = JSON.parse(await readFile(new URL('package.json', root), 'utf8'));
 if (JSON.stringify(manifest.dependencies) !== JSON.stringify({ pg: '8.23.1' }) || manifest.devDependencies || manifest.engines.node !== '24.x') throw new Error('Unexpected application dependency or runtime.');
 const lock = JSON.parse(await readFile(new URL('package-lock.json', root), 'utf8'));

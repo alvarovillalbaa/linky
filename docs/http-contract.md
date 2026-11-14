@@ -5,6 +5,14 @@ approval. These routes are not evidence of a configured or accepted hosted
 service. PostgreSQL owns capability scope, database time, locks, CAS,
 idempotency and committed outcomes; the browser never supplies an owner role.
 
+The [V3 contract](proposals/protected-resources.md) extends this boundary with
+owner host credentials, recipient receipt access and server-to-server origin
+authorization. Its 32 KiB/5 s closed body reader is shared. Only conversion ingest
+and origin authorization admit an absent Origin; a supplied Origin must still
+match and cookies are refused. The separately scoped lyp_/lya_ keys do not grant
+owner, recipient or conversion authority. See [dated acceptance](results/2026/11-14/protected-resources.md)
+for source, disposable execution and the inactive live-project boundary.
+
 `createHandler({repository, origin, allowInsecureLoopback:false})` from
 `server/http.mjs` returns an async Web `Request` → `Response` handler.
 `createPostgresRepository({connectionString, ca?, allowInsecureLoopback:false})`

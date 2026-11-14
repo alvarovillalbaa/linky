@@ -72,7 +72,8 @@ async function run(name, args, capMs) {
   }
   clearTimeout(kill);
   const streams = ['stdout', 'stderr'].map(stream => {
-    const raw = Buffer.concat(chunks.filter(x => x.stream === stream).map(x => x.data));
+    let raw = Buffer.concat(chunks.filter(x => x.stream === stream).map(x => x.data));
+    if (process.env.LINKY_CHECK_SUITE === 'protected-resources-v3') raw = Buffer.from(raw.toString('utf8').replace(/ly[oripa]_[0-9a-f]{64}/giu, '[disposable capability redacted]'));
     return { stream, bytes: raw.length, sha256: hash(raw), zlibBase64: deflateSync(raw).toString('base64') };
   });
   receipt.commands.push({ name, args, startedAt: new Date(started).toISOString(), elapsedMs: Date.now() - started, ...result, timedOut, groupGone, forcedGroupCleanup, closeObserved, interrupted, streams });
@@ -80,7 +81,45 @@ async function run(name, args, capMs) {
 }
 try {
   await run('source checks', ['scripts/check.mjs'], 60000);
-  if (process.env.LINKY_CHECK_SUITE === 'service-extension-v2') {
+  if (process.env.LINKY_CHECK_SUITE === 'protected-resources-v3') {
+    assert.equal(process.env.LINKY_DISPOSABLE_DB, 'linky-pg17-origin-v3');
+    receipt.suite = 'protected-resources-v3';
+    receipt.generation = JSON.parse(await readFile(process.env.RUNNER_TEMP + '/linky-origin-generation.json', 'utf8'));
+    assert.equal(receipt.generation.cli, '2.122.0');
+    assert.equal(hash(await readFile(process.env.LINKY_V3_MIGRATION)), before.files.find(row => row.path === 'docs/proposals/protected-resources.sql').sha256);
+    receipt.generation.populatedSha256 = hash(await readFile(process.env.LINKY_V3_MIGRATION));
+    const unitPath = 'docs/results/2026/11-14/origin-attempt-1/check-receipt.json';
+    const unitBytes = await readFile(unitPath), prior = JSON.parse(unitBytes);
+    assert.equal(hash(unitBytes), '00d7fcb289dfb4133572411a5a7852a05975024f00ad34349cbb11b7d3e469cc');
+    assert.equal(prior.node, process.version); assert.equal(prior.sourceUnchanged, true); assert.deepEqual(prior.before, prior.after);
+    const stablePaths = ['tests/unit/protected-resources.test.mjs','server/http.mjs','server/capabilities.mjs','server/errors.mjs','server/protected-resource.mjs','public/src/resource-client.mjs','public/src/server-client.mjs','public/src/destinations.mjs'];
+    for (const path of stablePaths) assert.deepEqual(before.files.find(row => row.path === path), prior.before.files.find(row => row.path === path));
+    const unit = prior.commands.find(row => row.name === 'protected HTTP, capabilities, host guard and bounded download');
+    assert(unit.code === 0 && unit.closeObserved && unit.groupGone && !unit.forcedGroupCleanup && !unit.timedOut && !unit.interrupted);
+    for (const stream of unit.streams) {
+      const decoded = inflateSync(Buffer.from(stream.zlibBase64, 'base64')); assert.equal(decoded.length, stream.bytes); assert.equal(hash(decoded), stream.sha256);
+      if (stream.stream === 'stdout') for (const [key, count] of [['tests',27],['pass',27],['fail',0],['cancelled',0],['skipped',0],['todo',0]]) assert(new RegExp(`^# ${key} ${count}$`,'m').test(decoded.toString('utf8')));
+    }
+    receipt.unitCarriedForward = { path: unitPath, sha256: hash(unitBytes), sourceHead: prior.before.head, stablePaths, passedCases: 27, repeatedCases: 0 };
+    const databasePath = 'docs/results/2026/11-14/origin-attempt-2/check-receipt.json';
+    const databaseBytes = await readFile(databasePath), priorDatabase = JSON.parse(databaseBytes);
+    assert.equal(hash(databaseBytes), '7b001f1bc74fd63328255b541862fea204599dc790f5acdb9c33794b973f8735');
+    assert.equal(priorDatabase.node, process.version); assert.equal(priorDatabase.sourceUnchanged, true); assert.deepEqual(priorDatabase.before, priorDatabase.after);
+    const databasePaths = ['tests/integration/protected-resources.test.mjs','tests/fixtures/origin-db.mjs','db/bootstrap.sql','server/postgres.mjs','server/http.mjs','server/capabilities.mjs','server/errors.mjs','public/src/destinations.mjs','docs/proposals/protected-resources.sql',
+      'supabase/migrations/20261105080045_linky_initial_service.sql','supabase/migrations/20261105092311_linky_service_extension.sql','supabase/migrations/20261114200848_linky_protected_resources.sql','package.json','package-lock.json'];
+    for (const path of databasePaths) assert.deepEqual(before.files.find(row => row.path === path), priorDatabase.before.files.find(row => row.path === path));
+    const database = priorDatabase.commands.find(row => row.name === 'additive migration, real PostgreSQL locks and access policy');
+    assert(database.code === 0 && database.closeObserved && database.groupGone && !database.forcedGroupCleanup && !database.timedOut && !database.interrupted);
+    for (const stream of database.streams) {
+      const decoded = inflateSync(Buffer.from(stream.zlibBase64, 'base64')); assert.equal(decoded.length, stream.bytes); assert.equal(hash(decoded), stream.sha256);
+      if (stream.stream === 'stdout') for (const [key, count] of [['tests',22],['pass',22],['fail',0],['cancelled',0],['skipped',0],['todo',0]]) assert(new RegExp(`^# ${key} ${count}$`,'m').test(decoded.toString('utf8')));
+    }
+    receipt.databaseCarriedForward = { path: databasePath, sha256: hash(databaseBytes), sourceHead: priorDatabase.before.head, stablePaths: databasePaths, postgresMajor: 17, passedCases: 22, repeatedCases: 0 };
+    await run('prepare fresh protected-resource database', ['scripts/setup-origin-disposable.mjs'], 60000);
+    await run('protected resource desktop and narrow browser journeys', ['tests/browser/protected-resources.mjs'], 180000);
+    const browser = JSON.parse(await readFile(process.env.RUNNER_TEMP + '/linky-origin-evidence/browser.json', 'utf8')); assert.equal(browser.passed, true);
+    receipt.browser = browser;
+  } else if (process.env.LINKY_CHECK_SUITE === 'service-extension-v2') {
     assert.equal(process.env.LINKY_DISPOSABLE_DB, 'linky-pg17-extension-v2');
     assert.equal(before.files.find(x => x.path === 'supabase/migrations/20261105080045_linky_initial_service.sql')?.sha256, '406957876504aeb4c99a42f6488f24c325aaf9c2e41b8dc501f5c227b08249be');
     const path = 'docs/results/2026/11-05/service-attempt-1.json';
@@ -158,7 +197,7 @@ try {
     await run('unit and HTTP boundary checks', ['--test', '--test-reporter=tap', ...unit], 120000);
     await run('real PostgreSQL checks', ['--test', '--test-reporter=tap', 'tests/integration/database.test.mjs'], 180000);
   }
-  if (process.env.LINKY_CHECK_SUITE !== 'service-extension-v2') await run('desktop and narrow browser journeys', ['tests/browser/service.mjs'], 180000);
+  if (!['service-extension-v2','protected-resources-v3'].includes(process.env.LINKY_CHECK_SUITE)) await run('desktop and narrow browser journeys', ['tests/browser/service.mjs'], 180000);
   receipt.passed = true;
 } catch (error) { receipt.passed = false; receipt.failure = error.message; }
 try { receipt.after = await seal(); assert.deepEqual(receipt.after, before); receipt.sourceUnchanged = true; }

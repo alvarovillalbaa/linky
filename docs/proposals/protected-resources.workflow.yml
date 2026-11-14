@@ -1,0 +1,130 @@
+# Inactive template. Activate only on this task-owned branch; retire after checks.
+name: Linky protected resources
+on:
+  push:
+    branches: [qa/linky-protected-resources-20261114]
+permissions:
+  contents: read
+jobs:
+  acceptance:
+    if: github.ref == 'refs/heads/qa/linky-protected-resources-20261114'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: authored-ci-only
+          POSTGRES_DB: linky_origin_checks
+        ports: [5432:5432]
+        options: >-
+          --health-cmd "pg_isready -U postgres -d linky_origin_checks"
+          --health-interval 5s --health-timeout 5s --health-retries 12
+    env:
+      CI: 'true'
+      LINKY_DISPOSABLE_DATABASE: 'true'
+      LINKY_DISPOSABLE_DB: linky-pg17-origin-v3
+      LINKY_CHECK_SUITE: protected-resources-v3
+      LINKY_TEST_DATABASE_URL: postgresql://postgres:authored-ci-only@127.0.0.1:5432/linky_origin_checks
+      PLAYWRIGHT_BROWSERS_PATH: /tmp/linky-origin-browser-20261114
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24.21.0
+      - name: Install exact driver and disposable browser tooling
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm install --prefix "$RUNNER_TEMP/linky-origin-tools" --no-package-lock --ignore-scripts --no-audit --no-fund playwright@1.64.1
+          node "$RUNNER_TEMP/linky-origin-tools/node_modules/playwright/cli.js" install --with-deps chromium
+          echo "LINKY_PLAYWRIGHT_MODULE=$RUNNER_TEMP/linky-origin-tools/node_modules/playwright/index.mjs" >> "$GITHUB_ENV"
+      - name: Generate the additive migration with pinned Supabase
+        if: hashFiles('supabase/migrations/*_linky_protected_resources.sql') == ''
+        run: |
+          npm view supabase@2.122.0 dist.integrity --json > "$RUNNER_TEMP/linky-origin-cli-integrity.json"
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import { readFileSync, mkdirSync } from 'node:fs';
+          assert.equal(JSON.parse(readFileSync(process.env.RUNNER_TEMP + '/linky-origin-cli-integrity.json','utf8')), 'sha512-6IQOuHnRFyUgQxi6j6WfxJ6R4sh6vgcyhKxapv/CCDqs3+O/UxMggPxGAPr2eTEt1MhAOpa6xftiNRHIsB7afQ==');
+          mkdirSync(process.env.RUNNER_TEMP + '/linky-origin-generator', { mode: 0o700 });
+          NODE
+          cd "$RUNNER_TEMP/linky-origin-generator"
+          npm exec --yes --package=supabase@2.122.0 -- supabase --version > "$RUNNER_TEMP/linky-origin-cli-version.txt"
+          npm exec --yes --package=supabase@2.122.0 -- supabase migration new linky_protected_resources </dev/null
+          cd "$GITHUB_WORKSPACE"
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import { readFileSync, writeFileSync, readdirSync, statSync, existsSync, mkdirSync } from 'node:fs';
+          import { createHash } from 'node:crypto';
+          const root = process.env.RUNNER_TEMP + '/linky-origin-generator';
+          assert.equal(readFileSync(process.env.RUNNER_TEMP + '/linky-origin-cli-version.txt','utf8').trim(),'2.122.0');
+          const files = readdirSync(root + '/supabase/migrations'); assert.equal(files.length,1); assert.match(files[0], /^\d{14}_linky_protected_resources\.sql$/);
+          const path = root + '/supabase/migrations/' + files[0]; const scaffold = readFileSync(path); assert(statSync(path).isFile()); assert(scaffold.length < 1024); assert.equal(existsSync(root + '/supabase/.temp/project-ref'),false);
+          const hash = bytes => createHash('sha256').update(bytes).digest('hex');
+          writeFileSync(process.env.RUNNER_TEMP + '/linky-origin-generation.json', JSON.stringify({ cli:'2.122.0', name:files[0], scaffoldBytes:scaffold.length, scaffoldSha256:hash(scaffold) },null,2));
+          writeFileSync(path,readFileSync('docs/proposals/protected-resources.sql'));
+          writeFileSync(process.env.GITHUB_ENV,'LINKY_V3_MIGRATION=' + path + '\n',{flag:'a'});
+          mkdirSync(process.env.RUNNER_TEMP + '/linky-origin-evidence',{mode:0o700});
+          NODE
+      - name: Bind the already generated additive migration and its retained provenance
+        if: hashFiles('supabase/migrations/*_linky_protected_resources.sql') != ''
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import { readFileSync, writeFileSync, mkdirSync, readdirSync } from 'node:fs';
+          import { createHash } from 'node:crypto';
+          const hash=value=>createHash('sha256').update(value).digest('hex');
+          const receipt=readFileSync('docs/results/2026/11-14/origin-attempt-1/check-receipt.json');
+          assert.equal(hash(receipt),'00d7fcb289dfb4133572411a5a7852a05975024f00ad34349cbb11b7d3e469cc');
+          const prior=JSON.parse(receipt), name='20261114200848_linky_protected_resources.sql';
+          assert.equal(prior.generation.name,name); assert.equal(prior.generation.cli,'2.122.0'); assert.equal(prior.generation.scaffoldBytes,0);
+          const path=process.cwd()+'/supabase/migrations/'+name, bytes=readFileSync(path);
+          assert.equal(hash(bytes),prior.generation.populatedSha256); assert.deepEqual(bytes,readFileSync('docs/proposals/protected-resources.sql'));
+          writeFileSync(process.env.RUNNER_TEMP+'/linky-origin-generation.json',JSON.stringify({...prior.generation,sourceRun:43635816304},null,2));
+          writeFileSync(process.env.GITHUB_ENV,'LINKY_V3_MIGRATION='+path+'\n',{flag:'a'});
+          mkdirSync(process.env.RUNNER_TEMP+'/linky-origin-evidence',{mode:0o700});
+          NODE
+      - name: Prepare isolated HTTPS fixtures and disposable database marker
+        run: |
+          sysctl -n net.ipv4.ip_unprivileged_port_start > "$RUNNER_TEMP/linky-origin-port-start"
+          sudo sysctl -w net.ipv4.ip_unprivileged_port_start=0
+          sudo sh -c 'printf "\n127.0.0.1 linky.example.com resource.example.com # linky-origin-v3\n" >> /etc/hosts'
+          openssl req -x509 -newkey rsa:2048 -nodes -keyout "$RUNNER_TEMP/linky-origin-ci.key" -out "$RUNNER_TEMP/linky-origin-ci.crt" -days 1 -subj /CN=linky.example.com -addext 'subjectAltName=DNS:linky.example.com,DNS:resource.example.com' 2>/dev/null
+          chmod 600 "$RUNNER_TEMP/linky-origin-ci.key"
+          echo "LINKY_CI_CERT=$RUNNER_TEMP/linky-origin-ci.crt" >> "$GITHUB_ENV"
+          echo "LINKY_CI_KEY=$RUNNER_TEMP/linky-origin-ci.key" >> "$GITHUB_ENV"
+          echo "NODE_EXTRA_CA_CERTS=$RUNNER_TEMP/linky-origin-ci.crt" >> "$GITHUB_ENV"
+          node --input-type=module <<'NODE'
+          import { Client } from 'pg';
+          const client = new Client({connectionString:process.env.LINKY_TEST_DATABASE_URL,connectionTimeoutMillis:5000});
+          try { await client.connect(); await client.query("COMMENT ON DATABASE linky_origin_checks IS 'linky-origin-disposable-ci-v3'"); } finally { await client.end(); }
+          NODE
+      - name: Run focused source, protocol, PostgreSQL and browser acceptance
+        run: node scripts/ci-checks.mjs
+      - name: Retain bounded evidence and restore only task-owned runner settings
+        if: always()
+        run: |
+          node --input-type=module <<'NODE'
+          import { copyFileSync, existsSync, readdirSync, mkdirSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
+          const destination=process.env.RUNNER_TEMP + '/linky-origin-evidence'; mkdirSync(destination,{recursive:true});
+          for (const [source,name] of [['/linky-check-receipt.json','check-receipt.json'],['/linky-origin-generation.json','generation.json']]) if(existsSync(process.env.RUNNER_TEMP+source)) copyFileSync(process.env.RUNNER_TEMP+source,destination+'/'+name);
+          if(process.env.LINKY_V3_MIGRATION && existsSync(process.env.LINKY_V3_MIGRATION)) copyFileSync(process.env.LINKY_V3_MIGRATION,destination+'/'+process.env.LINKY_V3_MIGRATION.split('/').at(-1));
+          const path=destination+'/check-receipt.json';
+          const receipt=existsSync(path)?JSON.parse(readFileSync(path,'utf8')):null;
+          const clean=receipt && !receipt.interrupted && receipt.commands.every(row=>row.groupGone && !row.forcedGroupCleanup && row.closeObserved) && (!receipt.browser || Object.entries(receipt.browser.lifecycle).filter(([key])=>!key.startsWith('contexts')).every(([,value])=>value===true));
+          const targets=[process.cwd()+'/node_modules',process.env.RUNNER_TEMP+'/linky-origin-tools','/tmp/linky-origin-browser-20261114',process.env.RUNNER_TEMP+'/linky-origin-generator',process.env.RUNNER_TEMP+'/linky-origin-ci.key',process.env.RUNNER_TEMP+'/linky-origin-ci.crt'];
+          if(clean) for(const target of targets) rmSync(target,{recursive:true,force:true});
+          writeFileSync(destination+'/installation-cleanup.json',JSON.stringify({eligible:!!clean,targets:targets.map(path=>({name:path.split('/').at(-1),absent:!existsSync(path)}))},null,2));
+          NODE
+          sudo sed -i '/# linky-origin-v3$/d' /etc/hosts
+          if test -f "$RUNNER_TEMP/linky-origin-port-start"; then sudo sysctl -w "net.ipv4.ip_unprivileged_port_start=$(cat "$RUNNER_TEMP/linky-origin-port-start")"; fi
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: linky-protected-resources-evidence
+          path: ${{ runner.temp }}/linky-origin-evidence/
+          if-no-files-found: error
+          retention-days: 1

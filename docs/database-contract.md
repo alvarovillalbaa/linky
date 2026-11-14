@@ -5,6 +5,12 @@ functions. The [additive extension](service-extension-database.md) owns current
 bulk/conversion functions and two more tables. Its
 [dated results](results/2026/11-05/extension-checks.md) distinguish execution and live binding.
 
+The [V3 contract](proposals/protected-resources.md) adds origin_credentials,
+resource_access and six named entry points without rewriting these accepted
+versions. Its [generated migration](../supabase/migrations/20261114200848_linky_protected_resources.sql)
+has disposable acceptance only; it is not live-applied. Runtime table DML stays
+denied, and the owner/recipient/ingest/origin/access purposes remain separate.
+
 5 November 2026. Authored implementation and disposable fixtures; no local or
 live application is claimed by this document. The standing scope is recorded in
 [AGENTS](../AGENTS.md) and the [focused check proposal](proposals/persistent-service-checks.md).

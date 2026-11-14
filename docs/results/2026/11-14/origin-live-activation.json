@@ -1,0 +1,19 @@
+{
+  "recordedAt": "2026-11-14T20:21:25Z",
+  "source": "Supabase get_project read-only metadata during this continuation",
+  "project": {
+    "id": "bfteqhtzyzrinzxmgiee",
+    "name": "Linky",
+    "organization_id": "jnmtatndgpzawemtiukl",
+    "region": "eu-central-1",
+    "status": "INACTIVE",
+    "postgresVersion": "17.11.0.011"
+  },
+  "v3LiveApplied": false,
+  "restoreRequested": false,
+  "runtimeCredentialsBound": false,
+  "verifiedRuntimeTls": false,
+  "resourceHostInstalled": false,
+  "sqlMutations": 0,
+  "planOrCapacityChanges": 0
+}

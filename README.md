@@ -18,6 +18,16 @@ passed, with 34 unchanged helper cases carried forward. Its
 [additive schema is applied](docs/results/2026/11-05/extension-live-schema.md);
 runtime credentials and hosted acceptance remain unbound.
 
+Protected-resource V3 has [53 accepted focused cases](docs/results/2026/11-14/protected-resources.md): a purpose-bound host guard,
+revocable receipt access, explicit key replacement and bounded private downloads.
+Read the [V3 contract and exact check scope](docs/proposals/protected-resources.md)
+and [private-file integration example](examples/protected-origin/README.md).
+This source does not install protection on a destination server or activate a
+live migration. A host must enforce the guard on every route to its private bytes.
+The dedicated Supabase project currently reports INACTIVE. V3 is generated and
+disposable-tested; live application, verified runtime/TLS binding and hosted
+protection remain pending. No capacity, credential or plan change was made.
+
 The source includes a PostgreSQL-backed owner workspace and recipient flow:
 create/revise destinations, issue finite expiring grants, inspect the hostname,
 explicitly redeem, recover a committed receipt after an uncertain reply, and
@@ -62,7 +72,7 @@ Missing configuration leaves shared controls unavailable.
 CSV review alone remains unsent; saving valid reviewed rows requires an explicit
 owner action. Recover an uncertain batch with its same identities before
 separately resuming remaining batches. Authenticated declarations are not
-independently verified purchases. Identity/SSO, protected origins and external
+independently verified purchases. Identity/SSO, live protected-origin binding and external
 malware/reputation providers remain open. Address checks fetch no site and do
 not establish malware safety. Live activation and the full portfolio remain unfinished.
 

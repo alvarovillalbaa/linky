@@ -15,7 +15,7 @@ function number(value, max = Number.MAX_SAFE_INTEGER) {
 }
 function label(value, max, empty = false) {
   if (typeof value !== 'string' || value.length > max || (!empty && !value.trim()) || /[\u0000-\u001f\u007f]/u.test(value)
-    || /ly[ori]_[0-9a-f]{64}/u.test(value) || !value.isWellFormed()) throw new LinkyError('invalid_request'); return value;
+    || /ly[oripa]_[0-9a-f]{64}/u.test(value) || !value.isWellFormed()) throw new LinkyError('invalid_request'); return value;
 }
 function instant(value) {
   if (typeof value !== 'string' || !/^[0-9]{4}-/u.test(value)) throw new LinkyError('invalid_request');
@@ -32,14 +32,14 @@ function destination(draft) {
   let built, checked;
   try { built = buildDestination(draft); checked = analyzeDestination(built.url); }
   catch (error) { if (error instanceof DestinationError) throw new LinkyError('destination_invalid'); throw error; }
-  for (const value of [built.url, ...Object.values(built.draft)]) if (/ly[ori]_[0-9a-f]{64}/u.test(value)) throw new LinkyError('destination_invalid');
+  for (const value of [built.url, ...Object.values(built.draft)]) if (/ly[oripa]_[0-9a-f]{64}/u.test(value)) throw new LinkyError('destination_invalid');
   return { label: built.draft.title, destination: built.url,
     campaign: { source: built.draft.source, medium: built.draft.medium, campaign: built.draft.campaign },
     safety: { policyVersion: 'linky-address-v1', hostname: checked.hostname,
       result: checked.findings.some(row => row.severity === 'review') ? 'review' : 'accepted', reputation: 'unchecked' } };
 }
 function slug(value) {
-  if (typeof value !== 'string' || !/^[A-Za-z0-9_-]{8,96}$/u.test(value) || /ly[ori]_[0-9a-f]{64}/u.test(value)) throw new LinkyError('invalid_request');
+  if (typeof value !== 'string' || !/^[A-Za-z0-9_-]{8,96}$/u.test(value) || /ly[oripa]_[0-9a-f]{64}/u.test(value)) throw new LinkyError('invalid_request');
   return value;
 }
 function reportRequest(value) {
@@ -130,6 +130,15 @@ const routes = Object.freeze({
   '/conversion-credentials/revoke': ['ownerRevokeConversionCredential', ['workspaceId', 'mutationKey', 'linkId', 'credentialId', 'expectedVersion'], value => ({ ...mutation(value), linkId: id(value.linkId), credentialId: id(value.credentialId), expectedVersion: number(value.expectedVersion) })],
   '/conversions/ingest': ['conversionIngest', ['credentialId', 'receiptId', 'eventKey', 'kind', 'amountMinor', 'currency', 'declaredAt'], conversionRequest],
   '/reports/attribution': ['ownerAttributionReport', ['workspaceId', 'from', 'to', 'limit'], reportRequest],
+  '/origin-credentials/issue': ['ownerIssueOriginCredential', ['workspaceId', 'mutationKey', 'linkId', 'revisionId', 'expectedVersion', 'credentialId', 'originKey', 'label', 'expiresAt'], value => ({ ...mutation(value), linkId: id(value.linkId), revisionId: id(value.revisionId), expectedVersion: number(value.expectedVersion), credentialId: id(value.credentialId), originHash: hashCapability(value.originKey, 'origin'), label: label(value.label, 200), expiresAt: instant(value.expiresAt) })],
+  '/origin-credentials/list': ['ownerListOriginCredentials', ['workspaceId', 'linkId', 'limit', 'after'], value => ({ ...scope(value), linkId: id(value.linkId), limit: number(value.limit, 50), after: value.after === null ? null : id(value.after) })],
+  '/origin-credentials/revoke': ['ownerRevokeOriginCredential', ['workspaceId', 'mutationKey', 'linkId', 'credentialId', 'expectedVersion'], value => ({ ...mutation(value), linkId: id(value.linkId), credentialId: id(value.credentialId), expectedVersion: number(value.expectedVersion) })],
+  '/recipient/resource-inspect': ['recipientResourceInspect', ['grantId', 'recipientKey', 'receiptId'], value => ({ grantId: id(value.grantId), receiptId: id(value.receiptId) })],
+  '/recipient/resource-prepare': ['recipientPrepareResourceAccess', ['grantId', 'recipientKey', 'receiptId', 'accessId', 'accessKey', 'expectedAccessVersion'], value => {
+    if (!Number.isSafeInteger(value.expectedAccessVersion) || value.expectedAccessVersion < 0 || value.expectedAccessVersion >= Number.MAX_SAFE_INTEGER) throw new LinkyError('invalid_request');
+    return { grantId: id(value.grantId), receiptId: id(value.receiptId), accessId: id(value.accessId), accessHash: hashCapability(value.accessKey, 'access'), expectedAccessVersion: value.expectedAccessVersion };
+  }],
+  '/origin/authorize': ['originAuthorize', ['credentialId', 'accessId', 'accessKey'], value => ({ credentialId: id(value.credentialId), accessId: id(value.accessId), accessHash: hashCapability(value.accessKey, 'access') })],
 });
 // Shared with the deployment adapter: rewrite hints cannot introduce a dispatcher.
 export const API_ROUTES = Object.freeze(['status', ...Object.keys(routes).map(path => path.slice(1))]);
@@ -144,7 +153,13 @@ const acks = Object.freeze({
   ownerClose: ['workspaceId', 'state', 'ownerKeyVersion', 'replayed'],
   ownerIssueConversionCredential: ['workspaceId', 'linkId', 'credentialId', 'revisionId', 'version', 'replayed'],
   ownerRevokeConversionCredential: ['workspaceId', 'linkId', 'credentialId', 'version', 'replayed'],
+  ownerIssueOriginCredential: ['workspaceId', 'linkId', 'credentialId', 'revisionId', 'resourceUrl', 'version', 'replayed'],
+  ownerRevokeOriginCredential: ['workspaceId', 'linkId', 'credentialId', 'version', 'replayed'],
 });
+function validResource(value) {
+  try { const url = new URL(value); return typeof value === 'string' && value.length <= 2048 && url.href === value && url.protocol === 'https:' && !url.username && !url.password && !url.hash; }
+  catch { return false; }
+}
 function inspectAttribution(value, payload, closed) {
   const require = condition => { if (!condition) throw new LinkyError('service_unavailable', 503); };
   const count = number => Number.isSafeInteger(number) && number >= 0 && number <= payload.limit;
@@ -194,7 +209,7 @@ function inspectAttribution(value, payload, closed) {
 }
 function inspectResult(method, value, payload) {
   const text = JSON.stringify(value);
-  if (!text || Buffer.byteLength(text) > 256 * 1024 || /ly[ori]_[0-9a-f]{64}/u.test(text)) throw new LinkyError('service_unavailable', 503);
+  if (!text || Buffer.byteLength(text) > 256 * 1024 || /ly[oripa]_[0-9a-f]{64}/u.test(text)) throw new LinkyError('service_unavailable', 503);
   value = JSON.parse(text);
   const closed = (object, fields) => {
     if (!object || typeof object !== 'object' || Array.isArray(object) || Object.keys(object).length !== fields.length
@@ -203,7 +218,7 @@ function inspectResult(method, value, payload) {
   const visit = object => {
     if (!object || typeof object !== 'object') return;
     for (const [key, child] of Object.entries(object)) {
-      if (/hash|secret|token|credential|^(?:owner|recipient|ingest)key$/iu.test(key)
+      if (/hash|secret|token|credential|^(?:owner|recipient|ingest|origin|access)key$/iu.test(key)
         && !['credentialId', 'credentials'].includes(key)) throw new LinkyError('service_unavailable', 503);
       visit(child);
     }
@@ -226,12 +241,13 @@ function inspectResult(method, value, payload) {
     closed(value, ['grants', 'nextCursor']);
     if (!Array.isArray(value.grants) || value.grants.length > payload.limit) throw new LinkyError('service_unavailable', 503);
     for (const grant of value.grants) { closed(grant, ['id', 'linkId', 'revisionId', 'label', 'maxUses', 'usedCount', 'expiresAt', 'revokedAt', 'createdAt']); if (grant.linkId !== payload.linkId) throw new LinkyError('service_unavailable', 503); }
-  } else if (method === 'ownerListConversionCredentials') {
+  } else if (['ownerListConversionCredentials', 'ownerListOriginCredentials'].includes(method)) {
     closed(value, ['credentials', 'nextCursor']);
     if (!Array.isArray(value.credentials) || value.credentials.length > payload.limit || (value.nextCursor !== null && !UUID.test(value.nextCursor))) throw new LinkyError('service_unavailable', 503);
     for (const credential of value.credentials) {
-      closed(credential, ['id', 'linkId', 'revisionId', 'label', 'purpose', 'expiresAt', 'revokedAt', 'createdAt']);
-      if (credential.linkId !== payload.linkId || credential.purpose !== 'conversion_ingest' || !UUID.test(credential.id) || !UUID.test(credential.revisionId)) throw new LinkyError('service_unavailable', 503);
+      const origin = method === 'ownerListOriginCredentials';
+      closed(credential, ['id', 'linkId', 'revisionId', 'label', 'purpose', 'expiresAt', 'revokedAt', 'createdAt', ...(origin ? ['resourceUrl'] : [])]);
+      if (credential.linkId !== payload.linkId || credential.purpose !== (origin ? 'resource_authorize' : 'conversion_ingest') || !UUID.test(credential.id) || !UUID.test(credential.revisionId) || (origin && !validResource(credential.resourceUrl))) throw new LinkyError('service_unavailable', 503);
     }
   } else if (method === 'conversionIngest') {
     closed(value, ['eventId', 'workspaceId', 'linkId', 'revisionId', 'receiptId', 'eventKey', 'kind', 'acceptedAt', 'replayed']);
@@ -255,6 +271,14 @@ function inspectResult(method, value, payload) {
     }
   } else if (method === 'ownerAttributionReport') {
     inspectAttribution(value, payload, closed);
+  } else if (['recipientResourceInspect', 'recipientPrepareResourceAccess', 'originAuthorize'].includes(method)) {
+    const inspecting = method === 'recipientResourceInspect', authorizing = method === 'originAuthorize';
+    closed(value, authorizing ? ['authorized', 'credentialId', 'accessId', 'receiptId', 'linkId', 'revisionId', 'resourceUrl', 'expiresAt']
+      : ['grantId', 'receiptId', 'linkId', 'revisionId', 'resourceUrl', 'expiresAt', ...(inspecting ? ['accessVersion'] : ['accessId', 'version', 'replayed'])]);
+    for (const key of ['grantId', 'receiptId', 'credentialId', 'accessId', 'linkId', 'revisionId']) if (key in value && (typeof value[key] !== 'string' || !UUID.test(value[key]) || (key in payload && value[key] !== payload[key]))) throw new LinkyError('service_unavailable', 503);
+    if (!validResource(value.resourceUrl) || typeof value.expiresAt !== 'string' || !Number.isFinite(Date.parse(value.expiresAt))
+      || (authorizing && value.authorized !== true) || (inspecting && (!Number.isSafeInteger(value.accessVersion) || value.accessVersion < 0))
+      || (!authorizing && !inspecting && (!Number.isSafeInteger(value.version) || value.version < 1 || typeof value.replayed !== 'boolean'))) throw new LinkyError('service_unavailable', 503);
   } else if (method === 'recipientInspect') closed(value, ['grantId', 'linkId', 'label', 'hostname', 'safety', 'expiresAt', 'remainingUses']);
   else if (method === 'recipientRedeem') closed(value, ['receiptId', 'grantId', 'linkId', 'revisionId', 'useNumber', 'redeemedAt', 'destination', 'replayed']);
   else if (method === 'ownerReport') {
@@ -267,6 +291,7 @@ function inspectResult(method, value, payload) {
     if (value.campaigns.reduce((total, row) => total + row.redemptions, 0) !== value.redemptions) throw new LinkyError('service_unavailable', 503);
   }
   if (method.startsWith('recipient') && value.grantId !== payload.grantId) throw new LinkyError('service_unavailable', 503);
+  if (method === 'ownerIssueOriginCredential' && !validResource(value.resourceUrl)) throw new LinkyError('service_unavailable', 503);
   if (method !== 'recipientRedeem' && method !== 'ownerListLinks' && /"destination"\s*:/u.test(text)) throw new LinkyError('service_unavailable', 503);
   return value;
 }
@@ -300,16 +325,17 @@ export function createHandler({ repository = null, origin, allowInsecureLoopback
       if (request.method !== 'POST') throw new LinkyError('method_not_allowed', 405);
       if (!acceptedOrigin || !repository) throw new LinkyError('backend_unconfigured', 503);
       ingestion = route[0] === 'conversionIngest';
-      const originRequired = !ingestion || request.headers.has('origin');
+      const serverToServer = ingestion || route[0] === 'originAuthorize';
+      const originRequired = !serverToServer || request.headers.has('origin');
       if (url.origin !== acceptedOrigin || (originRequired && request.headers.get('origin') !== acceptedOrigin)
         || (request.headers.has('sec-fetch-site') && !['same-origin', 'none'].includes(request.headers.get('sec-fetch-site')))) throw new LinkyError('origin_denied', 403);
-      if (ingestion && request.headers.has('cookie')) throw new LinkyError('invalid_credential', 401);
+      if (serverToServer && request.headers.has('cookie')) throw new LinkyError('invalid_credential', 401);
       if (url.search) throw new LinkyError('invalid_request');
       const [method, fields, normalize] = route;
       const input = exact(await body(request), fields);
       const recipient = method.startsWith('recipient');
       if (recipient && request.headers.has('authorization')) throw new LinkyError('invalid_credential', 401);
-      const digest = recipient ? hashCapability(input.recipientKey, 'recipient') : ingestion ? headerDigest(request, 'ingest') : ownerDigest(request);
+      const digest = recipient ? hashCapability(input.recipientKey, 'recipient') : ingestion ? headerDigest(request, 'ingest') : method === 'originAuthorize' ? headerDigest(request, 'origin') : ownerDigest(request);
       const payload = normalize(input);
       const localOnly = method === 'ownerBulkCreateLinks' && payload.rows.length === 0;
       const target = localOnly ? null : typeof repository === 'function' ? await repository() : repository;
