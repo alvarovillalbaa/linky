@@ -1,5 +1,9 @@
 # Linky
 
+<!-- project-family:start -->
+> **Project family:** [Web & Creative Apps](https://github.com/alvarovillalbaa#web-and-creative-apps) · **Area:** Link management
+<!-- project-family:end -->
+
 [Open the unconfigured review](https://linky-alvaro.vercel.app) ·
 [Publication and proof limits](docs/results/2026/11-05/extension-publication.md).
 
